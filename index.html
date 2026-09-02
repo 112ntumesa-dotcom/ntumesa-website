@@ -44,34 +44,43 @@
   <!-- ==========================================
        2. 全螢幕輪播幻燈片 (Hero Slider)
        ========================================== -->
-  <section class="slider-container" id="hero-slider">
-    <!-- 幻燈片 1：放你們的照片 -->
-    <div class="slide active">
-      <img class="slide-img" src="images/slide1.jpg" onerror="this.src='https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1920&q=80'" alt="系會合照">
+<section class="slider-container" id="hero-slider">
+  <!-- 投影片 1 -->
+  <div class="slide active">
+    <!-- 換成新檔名或直接貼上圖片 URL -->
+    <img class="slide-img" src="images/1.webp" alt="機械迎新宿營">
+    <!-- 若有文字遮罩，可在這裡修改文字 -->
+    <div class="slide-overlay">
+      <div class="slide-overlay-content">
+        <h2 class="slide-title">2026 機械系迎新宿營</h2>
+        <p class="slide-desc">歡迎大一新鮮人加入機械大家庭！</p>
+      </div>
     </div>
+  </div>
 
-    <!-- 幻燈片 2 -->
-    <div class="slide">
-      <img class="slide-img" src="images/slide2.jpg" onerror="this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1920&q=80'" alt="活動現場">
+  <!-- 投影片 2 -->
+  <div class="slide">
+    <img class="slide-img" src="images/1.webp" alt="實作工作坊">
+    <div class="slide-overlay">
+      <div class="slide-overlay-content">
+        <h2 class="slide-title">實作工作坊 & 企業參訪</h2>
+        <p class="slide-desc">結合理論與工程實務，探索未來製造。</p>
+      </div>
     </div>
+  </div>
 
-    <!-- 幻燈片 3 -->
-    <div class="slide">
-      <img class="slide-img" src="images/slide3.jpg" onerror="this.src='https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=1920&q=80'" alt="實作工作坊">
-    </div>
+  <!-- 向下滾動指示小箭頭 -->
+  <div class="scroll-indicator" onclick="document.getElementById('main-content').scrollIntoView({ behavior: 'smooth' });">
+    ⌄
+  </div>
 
-    <!-- 向下滾動指示小箭頭 -->
-    <div class="scroll-indicator" onclick="document.getElementById('main-content').scrollIntoView({ behavior: 'smooth' });">
-      ⌄
-    </div>
-
-    <!-- 輪播圓點指示器 -->
-    <div class="slider-dots" id="slider-dots">
-      <span class="dot active"></span>
-      <span class="dot"></span>
-      <span class="dot"></span>
-    </div>
-  </section>
+  <!-- 輪播圓點：有幾張投影片就放幾個 dot -->
+  <div class="slider-dots" id="slider-dots">
+    <span class="dot active"></span>
+    <span class="dot"></span>
+    <span class="dot"></span>
+  </div>
+</section>
 
   <!-- ==========================================
        3. 側邊抽屜選單 (Drawer Menu)
@@ -108,11 +117,19 @@
 
   <!-- 主要內容區塊 -->
   <main id="main-content">
-    <section id="announcements" style="margin-bottom: 3.5rem;">
-      <h2 style="font-size: 1.5rem; margin-bottom: 1rem; color: var(--primary-color);">📢 最新活動公告</h2>
-      <div id="announcement-loading" style="text-align: center; padding: 2rem; color: #64748b;">載入公告中...</div>
-      <div id="announcement-list" class="announcement-list" style="display: none;"></div>
-    </section>
+<section id="announcements" class="activities-section">
+  <div class="activities-header">
+    <div>
+      <h2 class="activities-title">📢 最新活動公告</h2>
+    </div>
+  </div>
+
+  <!-- 載入提示 -->
+  <div id="announcement-loading" style="text-align: center; padding: 2rem; color: #64748b;">載入公告中...</div>
+  
+  <!-- 注意這個 id 必須是 activities-container -->
+  <div id="activities-container" class="activities-scroll-container" style="display: none;"></div>
+</section>
 
     <!-- 團隊介紹區塊 -->
 <section id="team" style="margin-bottom: 5rem;">
@@ -188,41 +205,81 @@
       dot.addEventListener("click", () => { showSlide(idx); resetSlideTimer(); });
     });
     resetSlideTimer();
+/* 渲染活動橫向卡片 */
+function renderAnnouncements(data) {
+  const loadingEl = document.getElementById("announcement-loading");
+  const containerEl = document.getElementById("activities-container");
 
-    /* 載入 Google Sheets 公告與成員 */
-    function loadAnnouncements() {
-      const loadingEl = document.getElementById("announcement-loading");
-      const listEl = document.getElementById("announcement-list");
-      Papa.parse(CSV_CONFIG.announcementsUrl, {
-        download: true,
-        header: true,
-        skipEmptyLines: true,
-        complete: function(results) {
-          loadingEl.style.display = "none";
-          listEl.style.display = "flex";
-          listEl.innerHTML = "";
-          const publishedData = results.data.filter(item => !item.status || item.status.trim().toLowerCase() === 'published');
-          if (publishedData.length === 0) {
-            listEl.innerHTML = "<p style='color: #64748b;'>目前暫無最新公告。</p>";
-            return;
-          }
-          publishedData.forEach(item => {
-            const card = document.createElement("div");
-            card.className = "announcement-card";
-            card.innerHTML = `
-              <div class="announcement-info">
-                <div class="announcement-date">📅 ${item.date || '近期'} <span class="badge">${item.category || '活動'}</span></div>
-                <div class="announcement-title">${item.title || '無標題'}</div>
-                <div style="font-size: 0.9rem; color: #475569;">${item.description || ''}</div>
-              </div>
-              ${item.link ? `<a href="${item.link}" target="_blank" class="btn" style="margin-left: 1rem;">查看詳情</a>` : ''}
-            `;
-            listEl.appendChild(card);
-          });
-        }
-      });
+  if (!data || data.length === 0) {
+    loadingEl.style.display = "none";
+    containerEl.style.display = "flex";
+    containerEl.innerHTML = "<p style='color: #64748b; padding: 1rem;'>目前暫無最新活動。</p>";
+    return;
+  }
+
+  containerEl.innerHTML = "";
+
+  data.forEach(item => {
+    // 預設活動圖片：可支援 Google Sheets 的 photoUrl 或預設圖
+    const imgUrl = (item.photoUrl && item.photoUrl.trim() !== '') 
+      ? item.photoUrl 
+      : 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=80';
+
+    const card = document.createElement("div");
+    card.className = "activity-card";
+    card.innerHTML = `
+      <div class="activity-card-img-wrap">
+        <img src="${imgUrl}" alt="${item.title || ''}" class="activity-card-img" loading="lazy">
+        <span class="activity-badge">${item.category || '活動'}</span>
+      </div>
+      <div class="activity-card-body">
+        <div class="activity-date">📅 ${item.date || '即將公布'}</div>
+        <div class="activity-title">${item.title || '活動名稱'}</div>
+        <div class="activity-desc">${item.description || '暫無詳細說明。'}</div>
+        <a href="${item.link || '#'}" target="${item.link ? '_blank' : '_self'}" class="activity-btn">
+          ${item.buttonText || '查看詳情'} →
+        </a>
+      </div>
+    `;
+    containerEl.appendChild(card);
+  });
+
+  loadingEl.style.display = "none";
+  containerEl.style.display = "flex";
+}
+
+/* 讀取公告 (含本地快取秒開機制) */
+function loadAnnouncements() {
+  // 1. 先讀取本地快取瞬間顯示
+  const cachedData = localStorage.getItem("ntumesa_announcements_cache");
+  if (cachedData) {
+    try {
+      renderAnnouncements(JSON.parse(cachedData));
+    } catch (e) {
+      console.warn("公告快取解析失敗", e);
     }
+  }
 
+  // 2. 向 Google Sheets 發布的 CSV 請求最新資料
+  Papa.parse(CSV_CONFIG.announcementsUrl, {
+    download: true,
+    header: true,
+    skipEmptyLines: true,
+    complete: function(results) {
+      const published = results.data.filter(item => 
+        item.title && item.title.trim() !== '' && (!item.status || item.status.trim().toLowerCase() === 'published')
+      );
+      localStorage.setItem("ntumesa_announcements_cache", JSON.stringify(published));
+      renderAnnouncements(published);
+    },
+    error: function(err) {
+      console.error("載入活動失敗:", err);
+      if (!cachedData) {
+        document.getElementById("announcement-loading").textContent = "載入失敗，請重新整理頁面。";
+      }
+    }
+  });
+}
     /* 成員資料快取 */
 let membersCache = [];
 
