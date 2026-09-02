@@ -1,0 +1,367 @@
+/* ===================================================
+   NTUMESA 全域變數設定：機械系質感配色（深藍 + 金屬銀灰）
+   =================================================== */
+:root {
+  --primary-color: #0d3b66;       /* 系會主色：深海軍藍 */
+  --primary-hover: #092642;
+  --accent-color: #f4d35e;        /* 強調色：暖亮金黃 */
+  --bg-color: #f8fafc;            /* 頁面淺灰背景 */
+  --card-bg: #ffffff;             /* 卡片白底 */
+  --text-primary: #1e293b;        /* 主文字顏色 */
+  --text-secondary: #64748b;      /* 次要文字顏色 */
+  --border-color: #e2e8f0;        /* 邊框線顏色 */
+  --radius: 10px;                 /* 圓角弧度 */
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+  line-height: 1.6;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 導覽列 Navigation */
+header {
+  background: var(--card-bg);
+  border-bottom: 2px solid var(--border-color);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.nav-wrap {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.site-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--primary-color);
+  text-decoration: none;
+  letter-spacing: 0.5px;
+}
+
+nav ul {
+  display: flex;
+  list-style: none;
+  gap: 1rem;
+}
+
+nav a {
+  text-decoration: none;
+  color: var(--text-secondary);
+  font-weight: 600;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+nav a:hover, nav a.active {
+  color: var(--primary-color);
+  background-color: #e0f2fe;
+}
+
+/* 頁面主要容器 */
+main {
+  flex: 1;
+  max-width: 1100px;
+  margin: 2rem auto;
+  padding: 0 1.5rem;
+  width: 100%;
+}
+
+/* 將幻燈片容器改為視窗滿版全寬 */
+.slider-container {
+  position: relative;
+  width: 100vw;               /* 填滿整個視窗寬度 */
+  max-width: 100%;
+  height: 480px;              /* 可依喜好調整高度，例如 450px ~ 550px */
+  margin: 0 auto 3rem auto;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  background-color: #0f172a;
+  border-radius: 0;           /* 全寬輪播移除圓角更具大器質感 */
+}
+
+.slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 0.8s ease-in-out;
+  display: flex;
+  align-items: flex-end;
+}
+
+.slide.active {
+  opacity: 1;
+  z-index: 2;
+}
+
+.slide-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 讓幻燈片內部的文字居中對齊整體網頁內容寬度 */
+.slide-overlay {
+  position: relative;
+  z-index: 3;
+  width: 100%;
+  padding: 3.5rem 1.5rem 2.5rem 1.5rem;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.25) 60%, transparent 100%);
+  color: #ffffff;
+}
+
+.slide-overlay-content {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.slide-title {
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+}
+
+.slide-desc {
+  font-size: 1.05rem;
+  color: #f1f5f9;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+/* 左右切換按鈕位置 */
+.slider-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.4);
+  color: white;
+  border: none;
+  font-size: 2rem;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.slider-btn:hover {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.slider-btn.prev { left: 2rem; }
+.slider-btn.next { right: 2rem; }
+
+/* 底部圓點指示器 */
+.slider-dots {
+  position: absolute;
+  bottom: 1.5rem;
+  right: 2.5rem;
+  z-index: 10;
+  display: flex;
+  gap: 0.6rem;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.dot.active {
+  background: #ffffff;
+  width: 28px;
+  border-radius: 5px;
+}
+
+/* ===================================================
+   最新活動公告樣式
+   =================================================== */
+.announcement-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.announcement-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-left: 4px solid var(--primary-color);
+  border-radius: var(--radius);
+  padding: 1.25rem 1.5rem;
+  box-shadow: var(--shadow);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: transform 0.15s ease;
+}
+
+.announcement-card:hover {
+  transform: translateX(4px);
+}
+
+.announcement-info {
+  flex: 1;
+}
+
+.announcement-date {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.announcement-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.75rem;
+  border-radius: 20px;
+  background: #e0f2fe;
+  color: #0369a1;
+  font-weight: 600;
+  margin-left: 0.5rem;
+}
+
+/* ===================================================
+   成員團隊卡片樣式
+   =================================================== */
+.members-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.member-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+
+.member-avatar {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #e2e8f0;
+  margin: 0 auto 1rem auto;
+}
+
+.member-name {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.member-role {
+  color: var(--primary-color);
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+}
+
+.member-dept {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.75rem;
+}
+
+.member-intro {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+/* ===================================================
+   按鈕與檔案表格通用樣式
+   =================================================== */
+.btn {
+  display: inline-block;
+  background: var(--primary-color);
+  color: white;
+  padding: 0.5rem 1.2rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+}
+
+.btn:hover {
+  background: var(--primary-hover);
+}
+
+.upload-box {
+  background: var(--card-bg);
+  border: 2px dashed #94a3b8;
+  border-radius: var(--radius);
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+.data-table th, .data-table td {
+  padding: 1rem 1.2rem;
+  border-bottom: 1px solid var(--border-color);
+  text-align: left;
+}
+
+.data-table th {
+  background: #f1f5f9;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+footer {
+  text-align: center;
+  padding: 2rem;
+  background: var(--card-bg);
+  border-top: 1px solid var(--border-color);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}

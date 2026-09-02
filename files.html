@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>資源與檔案下載 | NTUMESA</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- 引入極速輕量 CSV 解析庫 -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+</head>
+<body>
+  <!-- 獨立導覽列 -->
+  <header>
+    <div class="nav-wrap">
+      <a href="index.html" class="site-title">⚙️ NTUMESA 臺大機械系學會</a>
+      <nav>
+        <ul>
+          <li><a href="index.html">首頁</a></li>
+          <li><a href="files.html" class="active">資源下載專區</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section style="text-align: center; margin-bottom: 2.5rem;">
+      <h1 style="font-size: 2.2rem; color: var(--primary-color); margin-bottom: 0.5rem;">系會檔案與課業資源專區</h1>
+      <p style="color: var(--text-secondary); font-size: 1.05rem;">提供系會章程、活動報名簡章、以及各科課業學習資源共享</p>
+    </section>
+
+    <!-- 檔案上傳區塊（上傳後自動傳遞至 Apps Script 存入 Google Drive） -->
+    <div class="upload-box" id="drop-zone">
+      <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📁</div>
+      <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">上傳新檔案 / 課業考古資料</h3>
+      <p style="color: var(--text-secondary); font-size: 0.9rem;">支援點擊選擇或直接拖曳檔案至此區域</p>
+      
+      <div style="margin-top: 1.25rem;">
+        <label class="btn" for="file-input">選取電腦中的檔案</label>
+        <input type="file" id="file-input" style="display: none;" />
+      </div>
+
+      <div id="upload-status" style="margin-top: 1rem; font-weight: 600; font-size: 0.9rem;"></div>
+    </div>
+
+    <!-- 檔案下載列表 (自 Google Sheets CSV 動態讀取) -->
+    <h2 style="font-size: 1.4rem; margin-bottom: 1rem; color: var(--primary-color);">📂 可供下載資源列表</h2>
+    
+    <div id="files-loading" style="text-align: center; padding: 2rem; color: #64748b;">載入檔案清單中...</div>
+
+    <table class="data-table" id="files-table" style="display: none;">
+      <thead>
+        <tr>
+          <th>檔案名稱</th>
+          <th>分類</th>
+          <th>上傳日期</th>
+          <th>下載</th>
+        </tr>
+      </thead>
+      <tbody id="files-tbody"></tbody>
+    </table>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 國立臺灣大學機械工程學系學生會 NTUMESA. All Rights Reserved.</p>
+  </footer>
+
+  <script src="config.js"></script>
+  <script>
+    /**
+     * 1. 載入下載檔案清單（讀取 Google Sheet Files CSV）
+     */
+    function loadFiles() {
+      const loadingEl = document.getElementById("files-loading");
+      const tableEl = document.getElementById("files-table");
+      const tbody = document.getElementById("files-tbody");
+
+      Papa.parse(CSV_CONFIG.filesUrl, {
+        download: true,
+        header: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+          loadingEl.style.display = "none";
+          tableEl.style.display = "table";
+          tbody.innerHTML = "";
+
+          const files = results.data;
+          if (!files || files.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #64748b; padding: 2rem;">目前尚無可下載的檔案。</td></tr>`;
+            return;
+          }
+
+          files.forEach(file => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td style="font-weight: 600;">${file.fileName || '未命名檔案'}</td>
+              <td><span class="badge">${file.category || '系會資源'}</span></td>
+              <td style="color: var(--text-secondary); font-size: 0.85rem;">${file.uploadDate || '-'}</td>
+              <td><a href="${file.downloadUrl}" target="_blank" class="btn" style="padding: 0.3rem 0.8rem; font-size: 0.85rem;">下載</a></td>
+            `;
+            tbody.appendChild(tr);
+          });
+        },
+        error: function(err) {
+          console.error("載入失敗:", err);
+          loadingEl.innerHTML = "<p style='color: #ef4444;'>無法讀取檔案列表，請確認已將 Files 工作表發布為 CSV。</p>";
+        }
+      });
+    }
+
+    /**
+     * 2. 處理檔案上傳（轉 Base64 POST 給 Apps Script）
+     */
+    const fileInput = document.getElementById("file-input");
+    const statusEl = document.getElementById("upload-status");
+    const dropZone = document.getElementById("drop-zone");
+
+    // 點擊選檔監聽
+    fileInput.addEventListener("change", (e) => {
+      if (e.target.files.length > 0) uploadFile(e.target.files[0]);
+    });
+
+    // 拖曳上傳監聽
+    dropZone.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      dropZone.style.borderColor = "var(--primary-color)";
+      dropZone.style.backgroundColor = "#f0f7ff";
+    });
+    dropZone.addEventListener("dragleave", () => {
+      dropZone.style.borderColor = "#94a3b8";
+      dropZone.style.backgroundColor = "var(--card-bg)";
+    });
+    dropZone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dropZone.style.borderColor = "#94a3b8";
+      dropZone.style.backgroundColor = "var(--card-bg)";
+      if (e.dataTransfer.files.length > 0) uploadFile(e.dataTransfer.files[0]);
+    });
+
+    function uploadFile(file) {
+      statusEl.style.color = "#0284c7";
+      statusEl.innerHTML = `⏳ 正在上傳「${file.name}」至雲端硬碟，請稍候...`;
+
+      // 檢查是否設定了 Apps Script 網址
+      const targetApiUrl = (typeof API_URL !== "undefined") ? API_URL : (typeof CSV_CONFIG !== "undefined" && CSV_CONFIG.uploadApiUrl ? CSV_CONFIG.uploadApiUrl : "");
+      
+      if (!targetApiUrl) {
+        statusEl.style.color = "#ef4444";
+        statusEl.innerHTML = `⚠️ 請先在 config.js 中設定上傳用的 Apps Script API_URL。`;
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = async function(e) {
+        try {
+          const base64Content = e.target.result.split(',')[1];
+          const payload = {
+            fileName: file.name,
+            mimeType: file.type || "application/octet-stream",
+            fileData: base64Content,
+            category: "系會資源"
+          };
+
+          const res = await fetch(targetApiUrl, {
+            method: "POST",
+            body: JSON.stringify(payload)
+          });
+          const json = await res.json();
+
+          if (json.status === "success") {
+            statusEl.style.color = "#16a34a";
+            statusEl.innerHTML = `✅「${file.name}」已成功上傳！`;
+            fileInput.value = "";
+            setTimeout(loadFiles, 2000); // 稍候自動重新整理表格
+          } else {
+            throw new Error(json.message);
+          }
+        } catch (err) {
+          console.error("上傳失敗:", err);
+          statusEl.style.color = "#ef4444";
+          statusEl.innerHTML = `❌ 上傳發生錯誤: ${err.message}`;
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    document.addEventListener("DOMContentLoaded", loadFiles);
+  </script>
+</body>
+</html>

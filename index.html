@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NTUMESA 國立臺灣大學機械工程學系學生會</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- 引入極速輕量 CSV 解析庫 PapaParse (承載高並發) -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+</head>
+<body>
+  <!-- 頂部導覽列：已移除 files.html 連結 -->
+  <header>
+    <div class="nav-wrap">
+      <a href="index.html" class="site-title">⚙️ NTUMESA 臺大機械系學會</a>
+    </div>
+  </header>
+
+  <!-- ==========================================
+       全寬幻燈片輪播區 (Full-Width Hero Slider)
+       ========================================== -->
+  <section class="slider-container" id="hero-slider">
+    <!-- 幻燈片 1 -->
+    <div class="slide active">
+      <img class="slide-img" src="https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1920&q=80" alt="機械之夜">
+      <div class="slide-overlay">
+        <div class="slide-overlay-content">
+          <h2 class="slide-title">2026 NTUMESA 機械之夜</h2>
+          <p class="slide-desc">凝聚機械系熱血與創意，年度大型舞台盛會即將登場！</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 幻燈片 2 -->
+    <div class="slide">
+      <img class="slide-img" src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=1920&q=80" alt="學術工坊">
+      <div class="slide-overlay">
+        <div class="slide-overlay-content">
+          <h2 class="slide-title">實作工作坊 & 企業參訪</h2>
+          <p class="slide-desc">結合理論與工程實務，探索未來製造與智慧科技前沿。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 幻燈片 3 -->
+    <div class="slide">
+      <img class="slide-img" src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1920&q=80" alt="系學會團隊">
+      <div class="slide-overlay">
+        <div class="slide-overlay-content">
+          <h2 class="slide-title">系學會大家庭</h2>
+          <p class="slide-desc">服務全體機械系同學，提供課業資源、生活權益與多元系友交流平台。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 切換按鈕 -->
+    <button class="slider-btn prev" id="slide-prev">&#10094;</button>
+    <button class="slider-btn next" id="slide-next">&#10095;</button>
+
+    <!-- 底部圓點 -->
+    <div class="slider-dots" id="slider-dots">
+      <span class="dot active"></span>
+      <span class="dot"></span>
+      <span class="dot"></span>
+    </div>
+  </section>
+
+  <!-- 主要內容區塊（有寬度限制，文字與卡片居中對齊） -->
+  <main>
+    <!-- 區塊一：最新活動公告 -->
+    <section style="margin-bottom: 3.5rem;">
+      <h2 style="font-size: 1.5rem; margin-bottom: 1rem; color: var(--primary-color);">📢 最新活動公告</h2>
+      <div id="announcement-loading" style="text-align: center; padding: 2rem; color: #64748b;">載入公告中...</div>
+      <div id="announcement-list" class="announcement-list" style="display: none;"></div>
+    </section>
+
+    <!-- 區塊二：系學會團隊成員 -->
+    <section>
+      <h2 style="font-size: 1.5rem; margin-bottom: 1rem; color: var(--primary-color);">👥 系學會團隊成員</h2>
+      <div id="members-loading" style="text-align: center; padding: 2rem; color: #64748b;">載入團隊成員名單...</div>
+      <div id="members-grid" class="members-grid" style="display: none;"></div>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 國立臺灣大學機械工程學系學生會 NTUMESA. All Rights Reserved.</p>
+  </footer>
+
+  <script src="config.js"></script>
+  <script>
+    /* ===================================================
+       全寬幻燈片控制邏輯 (自動 5 秒輪播 + 左右按鈕 + 圓點)
+       =================================================== */
+    const slides = document.querySelectorAll(".slide");
+    const dots = document.querySelectorAll(".dot");
+    let currentSlide = 0;
+    let slideTimer = null;
+
+    function showSlide(index) {
+      if (index >= slides.length) currentSlide = 0;
+      else if (index < 0) currentSlide = slides.length - 1;
+      else currentSlide = index;
+
+      slides.forEach(s => s.classList.remove("active"));
+      dots.forEach(d => d.classList.remove("active"));
+
+      slides[currentSlide].classList.add("active");
+      dots[currentSlide].classList.add("active");
+    }
+
+    function nextSlide() { showSlide(currentSlide + 1); }
+    function prevSlide() { showSlide(currentSlide - 1); }
+
+    function resetSlideTimer() {
+      clearInterval(slideTimer);
+      slideTimer = setInterval(nextSlide, 5000);
+    }
+
+    document.getElementById("slide-next").addEventListener("click", () => {
+      nextSlide();
+      resetSlideTimer();
+    });
+
+    document.getElementById("slide-prev").addEventListener("click", () => {
+      prevSlide();
+      resetSlideTimer();
+    });
+
+    dots.forEach((dot, idx) => {
+      dot.addEventListener("click", () => {
+        showSlide(idx);
+        resetSlideTimer();
+      });
+    });
+
+    resetSlideTimer();
+
+    /* ===================================================
+       Google Sheet 資料讀取 (活動公告與成員名單)
+       =================================================== */
+    function loadAnnouncements() {
+      const loadingEl = document.getElementById("announcement-loading");
+      const listEl = document.getElementById("announcement-list");
+
+      Papa.parse(CSV_CONFIG.announcementsUrl, {
+        download: true,
+        header: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+          loadingEl.style.display = "none";
+          listEl.style.display = "flex";
+          listEl.innerHTML = "";
+
+          const publishedData = results.data.filter(item => 
+            !item.status || item.status.trim().toLowerCase() === 'published'
+          );
+
+          if (publishedData.length === 0) {
+            listEl.innerHTML = "<p style='color: #64748b;'>目前暫無最新公告。</p>";
+            return;
+          }
+
+          publishedData.forEach(item => {
+            const card = document.createElement("div");
+            card.className = "announcement-card";
+            card.innerHTML = `
+              <div class="announcement-info">
+                <div class="announcement-date">📅 ${item.date || '近期'} <span class="badge">${item.category || '活動'}</span></div>
+                <div class="announcement-title">${item.title || '無標題'}</div>
+                <div style="font-size: 0.9rem; color: #475569;">${item.description || ''}</div>
+              </div>
+              ${item.link ? `<a href="${item.link}" target="_blank" class="btn" style="margin-left: 1rem;">查看詳情</a>` : ''}
+            `;
+            listEl.appendChild(card);
+          });
+        }
+      });
+    }
+
+    function loadMembers() {
+      const loadingEl = document.getElementById("members-loading");
+      const gridEl = document.getElementById("members-grid");
+
+      Papa.parse(CSV_CONFIG.membersUrl, {
+        download: true,
+        header: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+          loadingEl.style.display = "none";
+          gridEl.style.display = "grid";
+          gridEl.innerHTML = "";
+
+          const data = results.data;
+          if (data.length === 0) {
+            gridEl.innerHTML = "<p style='grid-column: 1/-1; text-align: center; color: #64748b;'>目前無成員資料。</p>";
+            return;
+          }
+
+          data.forEach(member => {
+            const card = document.createElement("div");
+            card.className = "member-card";
+            const avatarUrl = (member.photoUrl && member.photoUrl.trim() !== "") 
+              ? member.photoUrl 
+              : "https://via.placeholder.com/90?text=NTU";
+
+            card.innerHTML = `
+              <img src="${avatarUrl}" alt="${member.name}" class="member-avatar">
+              <div class="member-name">${member.name || ''}</div>
+              <div class="member-role">${member.role || ''}</div>
+              <div class="member-dept">${member.department || ''}</div>
+              <p class="member-intro">${member.intro || ''}</p>
+            `;
+            gridEl.appendChild(card);
+          });
+        }
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      loadAnnouncements();
+      loadMembers();
+    });
+  </script>
+</body>
+</html>
