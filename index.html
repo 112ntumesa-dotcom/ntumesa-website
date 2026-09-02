@@ -3,61 +3,69 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NTUMESA 國立臺灣大學機械工程學系學生會_testing</title>
+  <title>臺大機械系系學會 NTUMESA</title>
   <link rel="stylesheet" href="style.css" />
-  <!-- 引入極速輕量 CSV 解析庫 PapaParse (承載高並發) -->
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 </head>
 <body>
-  <!-- 頂部導覽列：已移除 files.html 連結 -->
+  <!-- ==========================================
+       1. 懸浮透明導覽列 (Overlay Header)
+       ========================================== -->
   <header>
     <div class="nav-wrap">
-      <a href="index.html" class="site-title">⚙️ NTUMESA 臺大機械系學會</a>
+      <!-- 左側 Logo 與標題 -->
+      <a href="index.html" class="site-logo">
+        <img src="images/logo.png" onerror="this.src='https://via.placeholder.com/40?text=ME'" alt="系會Logo">
+        <span class="site-title">臺大機械系系學會</span>
+      </a>
+
+      <!-- 右側導覽按鈕群 -->
+      <div class="nav-right">
+        <ul class="nav-links">
+          <li><a href="album.html">活動相簿</a></li>
+          <li><a href="files.html">歷屆資料庫</a></li>
+        </ul>
+
+        <!-- 藍色藥丸膠囊按鈕 -->
+        <a href="https://camp.ntumesa.com" target="_blank" class="pill-btn">
+          <span>⚙️</span> 台大機械營
+        </a>
+
+        <!-- 漢堡選單按鈕 (觸發全部連結抽屜) -->
+        <button class="hamburger-btn" id="open-drawer-btn" aria-label="打開選單">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
     </div>
   </header>
 
   <!-- ==========================================
-       全寬幻燈片輪播區 (Full-Width Hero Slider)
+       2. 全螢幕輪播幻燈片 (Hero Slider)
        ========================================== -->
   <section class="slider-container" id="hero-slider">
-    <!-- 幻燈片 1 -->
+    <!-- 幻燈片 1：放你們的照片 -->
     <div class="slide active">
-      <img class="slide-img" src="https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1920&q=80" alt="機械之夜">
-      <div class="slide-overlay">
-        <div class="slide-overlay-content">
-          <h2 class="slide-title">2026 NTUMESA 機械之夜</h2>
-          <p class="slide-desc">凝聚機械系熱血與創意，年度大型舞台盛會即將登場！</p>
-        </div>
-      </div>
+      <img class="slide-img" src="images/slide1.jpg" onerror="this.src='https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1920&q=80'" alt="系會合照">
     </div>
 
     <!-- 幻燈片 2 -->
     <div class="slide">
-      <img class="slide-img" src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=1920&q=80" alt="學術工坊">
-      <div class="slide-overlay">
-        <div class="slide-overlay-content">
-          <h2 class="slide-title">實作工作坊 & 企業參訪</h2>
-          <p class="slide-desc">結合理論與工程實務，探索未來製造與智慧科技前沿。</p>
-        </div>
-      </div>
+      <img class="slide-img" src="images/slide2.jpg" onerror="this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1920&q=80'" alt="活動現場">
     </div>
 
     <!-- 幻燈片 3 -->
     <div class="slide">
-      <img class="slide-img" src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1920&q=80" alt="系學會團隊">
-      <div class="slide-overlay">
-        <div class="slide-overlay-content">
-          <h2 class="slide-title">系學會大家庭</h2>
-          <p class="slide-desc">服務全體機械系同學，提供課業資源、生活權益與多元系友交流平台。</p>
-        </div>
-      </div>
+      <img class="slide-img" src="images/slide3.jpg" onerror="this.src='https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=1920&q=80'" alt="實作工作坊">
     </div>
 
-    <!-- 切換按鈕 -->
-    <button class="slider-btn prev" id="slide-prev">&#10094;</button>
-    <button class="slider-btn next" id="slide-next">&#10095;</button>
+    <!-- 向下滾動指示小箭頭 -->
+    <div class="scroll-indicator" onclick="document.getElementById('main-content').scrollIntoView({ behavior: 'smooth' });">
+      ⌄
+    </div>
 
-    <!-- 底部圓點 -->
+    <!-- 輪播圓點指示器 -->
     <div class="slider-dots" id="slider-dots">
       <span class="dot active"></span>
       <span class="dot"></span>
@@ -65,21 +73,72 @@
     </div>
   </section>
 
-  <!-- 主要內容區塊（有寬度限制，文字與卡片居中對齊） -->
-  <main>
-    <!-- 區塊一：最新活動公告 -->
-    <section style="margin-bottom: 3.5rem;">
+  <!-- ==========================================
+       3. 側邊抽屜選單 (Drawer Menu)
+       ========================================== -->
+  <div class="drawer-overlay" id="drawer-overlay">
+    <div class="drawer-panel">
+      <button class="drawer-close" id="close-drawer-btn">&times;</button>
+      
+      <div style="font-size: 1.25rem; font-weight: 700; color: #0d3b66; margin-top: 1rem;">
+        ⚙️ NTUMESA
+      </div>
+
+      <div class="drawer-category">
+        <h4>系會專區</h4>
+        <ul class="drawer-list">
+          <li><a href="index.html">網站首頁</a></li>
+          <li><a href="files.html">歷屆資料庫 & 檔案下載</a></li>
+          <li><a href="album.html">最新公告</a></li>
+          <li><a href="#team">系會團隊介紹</a></li>
+        </ul>
+      </div>
+
+      <div class="drawer-category">
+        <h4>校內常用系統</h4>
+        <ul class="drawer-list">
+          <li><a href="https://www.me.ntu.edu.tw/" target="_blank">臺大機械系官方網站</a></li>
+          <li><a href="https://cool.ntu.edu.tw/" target="_blank">NTU COOL</a></li>
+          <li><a href="https://nol.ntu.edu.tw/" target="_blank">臺大課程網 (NOL)</a></li>
+          <li><a href="https://my.ntu.edu.tw/" target="_blank">myNTU 臺大人入口網</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 主要內容區塊 -->
+  <main id="main-content">
+    <section id="announcements" style="margin-bottom: 3.5rem;">
       <h2 style="font-size: 1.5rem; margin-bottom: 1rem; color: var(--primary-color);">📢 最新活動公告</h2>
       <div id="announcement-loading" style="text-align: center; padding: 2rem; color: #64748b;">載入公告中...</div>
       <div id="announcement-list" class="announcement-list" style="display: none;"></div>
     </section>
 
-    <!-- 區塊二：系學會團隊成員 -->
-    <section>
-      <h2 style="font-size: 1.5rem; margin-bottom: 1rem; color: var(--primary-color);">👥 系學會團隊成員</h2>
-      <div id="members-loading" style="text-align: center; padding: 2rem; color: #64748b;">載入團隊成員名單...</div>
-      <div id="members-grid" class="members-grid" style="display: none;"></div>
-    </section>
+    <!-- 團隊介紹區塊 -->
+<section id="team" style="margin-bottom: 5rem;">
+  <div class="team-section-header">
+    <h2 class="team-title">團隊介紹</h2>
+    <div class="team-subtitle">TEAM</div>
+  </div>
+
+  <div id="members-loading" style="text-align: center; padding: 2rem; color: #64748b;">載入團隊成員中...</div>
+  <div id="members-grid" class="members-grid" style="display: none;"></div>
+</section>
+
+<!-- 成員詳細資料與聯絡方式彈窗 -->
+<div class="contact-modal-overlay" id="contact-modal">
+  <div class="contact-modal-card">
+    <button class="contact-modal-close" id="close-contact-modal">&times;</button>
+    <img id="modal-avatar" class="contact-modal-avatar" src="" alt="成員頭貼">
+    <h3 id="modal-name" style="font-size: 1.35rem; font-weight: 700; margin-bottom: 0.25rem;"></h3>
+    <div id="modal-role" style="color: #0284c7; font-weight: 600; font-size: 0.95rem; margin-bottom: 0.5rem;"></div>
+    <div id="modal-intro" style="font-size: 0.9rem; color: #64748b; line-height: 1.5; margin-bottom: 0.5rem;"></div>
+
+    <div class="contact-info-list">
+      <div><strong>信箱：</strong> <span id="modal-email">-</span></div>
+    </div>
+  </div>
+</div>
   </main>
 
   <footer>
@@ -88,9 +147,21 @@
 
   <script src="config.js"></script>
   <script>
-    /* ===================================================
-       全寬幻燈片控制邏輯 (自動 5 秒輪播 + 左右按鈕 + 圓點)
-       =================================================== */
+    /* 側邊抽屜選單互動 */
+    const drawer = document.getElementById("drawer-overlay");
+    const openDrawerBtn = document.getElementById("open-drawer-btn");
+    const closeDrawerBtn = document.getElementById("close-drawer-btn");
+
+    openDrawerBtn.addEventListener("click", () => drawer.classList.add("open"));
+    closeDrawerBtn.addEventListener("click", () => drawer.classList.remove("open"));
+    drawer.addEventListener("click", (e) => {
+      if (e.target === drawer) drawer.classList.remove("open");
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") drawer.classList.remove("open");
+    });
+
+    /* 幻燈片控制邏輯 */
     const slides = document.querySelectorAll(".slide");
     const dots = document.querySelectorAll(".dot");
     let currentSlide = 0;
@@ -103,45 +174,25 @@
 
       slides.forEach(s => s.classList.remove("active"));
       dots.forEach(d => d.classList.remove("active"));
-
       slides[currentSlide].classList.add("active");
       dots[currentSlide].classList.add("active");
     }
 
     function nextSlide() { showSlide(currentSlide + 1); }
-    function prevSlide() { showSlide(currentSlide - 1); }
-
     function resetSlideTimer() {
       clearInterval(slideTimer);
       slideTimer = setInterval(nextSlide, 5000);
     }
 
-    document.getElementById("slide-next").addEventListener("click", () => {
-      nextSlide();
-      resetSlideTimer();
-    });
-
-    document.getElementById("slide-prev").addEventListener("click", () => {
-      prevSlide();
-      resetSlideTimer();
-    });
-
     dots.forEach((dot, idx) => {
-      dot.addEventListener("click", () => {
-        showSlide(idx);
-        resetSlideTimer();
-      });
+      dot.addEventListener("click", () => { showSlide(idx); resetSlideTimer(); });
     });
-
     resetSlideTimer();
 
-    /* ===================================================
-       Google Sheet 資料讀取 (活動公告與成員名單)
-       =================================================== */
+    /* 載入 Google Sheets 公告與成員 */
     function loadAnnouncements() {
       const loadingEl = document.getElementById("announcement-loading");
       const listEl = document.getElementById("announcement-list");
-
       Papa.parse(CSV_CONFIG.announcementsUrl, {
         download: true,
         header: true,
@@ -150,16 +201,11 @@
           loadingEl.style.display = "none";
           listEl.style.display = "flex";
           listEl.innerHTML = "";
-
-          const publishedData = results.data.filter(item => 
-            !item.status || item.status.trim().toLowerCase() === 'published'
-          );
-
+          const publishedData = results.data.filter(item => !item.status || item.status.trim().toLowerCase() === 'published');
           if (publishedData.length === 0) {
             listEl.innerHTML = "<p style='color: #64748b;'>目前暫無最新公告。</p>";
             return;
           }
-
           publishedData.forEach(item => {
             const card = document.createElement("div");
             card.className = "announcement-card";
@@ -177,44 +223,79 @@
       });
     }
 
-    function loadMembers() {
-      const loadingEl = document.getElementById("members-loading");
-      const gridEl = document.getElementById("members-grid");
+    /* 成員資料快取 */
+let membersCache = [];
 
-      Papa.parse(CSV_CONFIG.membersUrl, {
-        download: true,
-        header: true,
-        skipEmptyLines: true,
-        complete: function(results) {
-          loadingEl.style.display = "none";
-          gridEl.style.display = "grid";
-          gridEl.innerHTML = "";
+function loadMembers() {
+  const loadingEl = document.getElementById("members-loading");
+  const gridEl = document.getElementById("members-grid");
 
-          const data = results.data;
-          if (data.length === 0) {
-            gridEl.innerHTML = "<p style='grid-column: 1/-1; text-align: center; color: #64748b;'>目前無成員資料。</p>";
-            return;
-          }
+  Papa.parse(CSV_CONFIG.membersUrl, {
+    download: true,
+    header: true,
+    skipEmptyLines: true,
+    complete: function(results) {
+      loadingEl.style.display = "none";
+      gridEl.style.display = "grid";
+      gridEl.innerHTML = "";
 
-          data.forEach(member => {
-            const card = document.createElement("div");
-            card.className = "member-card";
-            const avatarUrl = (member.photoUrl && member.photoUrl.trim() !== "") 
-              ? member.photoUrl 
-              : "https://via.placeholder.com/90?text=NTU";
+      membersCache = results.data;
+      if (membersCache.length === 0) {
+        gridEl.innerHTML = "<p style='grid-column: 1/-1; text-align: center; color: #64748b;'>目前無成員資料。</p>";
+        return;
+      }
 
-            card.innerHTML = `
-              <img src="${avatarUrl}" alt="${member.name}" class="member-avatar">
-              <div class="member-name">${member.name || ''}</div>
-              <div class="member-role">${member.role || ''}</div>
-              <div class="member-dept">${member.department || ''}</div>
-              <p class="member-intro">${member.intro || ''}</p>
-            `;
-            gridEl.appendChild(card);
-          });
-        }
+      membersCache.forEach((member, index) => {
+        const item = document.createElement("div");
+        item.className = "member-item";
+        
+        // 若 photoUrl 為空，自動產生預設代稱頭貼
+        const avatarUrl = (member.photoUrl && member.photoUrl.trim() !== "") 
+          ? member.photoUrl 
+          : "https://via.placeholder.com/140?text=" + encodeURIComponent(member.name || 'NTU');
+
+        item.innerHTML = `
+          <img src="${avatarUrl}" alt="${member.name || ''}" class="member-avatar">
+          <div class="member-name">${member.name || ''}</div>
+          <div class="member-role">${member.role || ''}</div>
+        `;
+
+        // 綁定點擊開啟彈窗
+        item.addEventListener("click", () => openContactModal(index));
+        gridEl.appendChild(item);
       });
     }
+  });
+}
+
+/* 聯絡彈窗控制 */
+const contactModal = document.getElementById("contact-modal");
+const closeContactBtn = document.getElementById("close-contact-modal");
+
+function openContactModal(index) {
+  const m = membersCache[index];
+  if (!m) return;
+
+  document.getElementById("modal-avatar").src = (m.photoUrl && m.photoUrl.trim() !== "") 
+    ? m.photoUrl 
+    : "https://via.placeholder.com/100?text=" + encodeURIComponent(m.name || 'NTU');
+  
+  document.getElementById("modal-name").textContent = m.name || "未命名";
+  document.getElementById("modal-role").textContent = (m.department ? m.department + " ｜ " : "") + (m.role || "");
+  document.getElementById("modal-intro").textContent = m.intro || "無個人自介。";
+
+  // 聯絡方式顯示處理
+  document.getElementById("modal-email").innerHTML = m.email 
+    ? `<a href="mailto:${m.email}">${m.email}</a>` 
+    : "-";
+
+  contactModal.classList.add("open");
+}
+
+closeContactBtn.addEventListener("click", () => contactModal.classList.remove("open"));
+contactModal.addEventListener("click", (e) => {
+  if (e.target === contactModal) contactModal.classList.remove("open");
+});
 
     document.addEventListener("DOMContentLoaded", () => {
       loadAnnouncements();
