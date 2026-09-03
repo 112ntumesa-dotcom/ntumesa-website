@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NTUMESA 活動相簿回顧</title>
+  
+  <!-- PapaParse 用於解析 Google Sheets CSV -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+  <style>
+    :root {
+      --primary: #0284c7;
+      --primary-hover: #0369a1;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* 頂部導覽列 */
+    .nav-bar {
+      background: #ffffff;
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .nav-brand {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--primary);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .home-btn {
+      text-decoration: none;
+      background: #f1f5f9;
+      color: #334155;
+      padding: 0.45rem 1rem;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .home-btn:hover {
+      background: #e2e8f0;
+      color: var(--primary);
+    }
+
+    /* 主內容區塊 */
+    .container {
+      max-width: 1200px;
+      margin: 2.5rem auto;
+      padding: 0 1.5rem;
+      flex: 1;
+      width: 100%;
+    }
+
+    .header-section {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .header-section h1 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 0.5rem;
+    }
+
+    .header-section p {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+    }
+
+    /* 年份切換標籤 */
+    .year-tabs {
+      display: flex;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-bottom: 2.5rem;
+      flex-wrap: wrap;
+    }
+
+    .year-tab {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      padding: 0.5rem 1.4rem;
+      border-radius: 30px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .year-tab:hover, .year-tab.active {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+      box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+    }
+
+    /* 相簿卡片網格 */
+    .albums-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.8rem;
+    }
+
+    .album-card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: all 0.25s ease;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .album-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+      border-color: #93c5fd;
+    }
+
+    .album-cover {
+      width: 100%;
+      height: 220px;
+      object-fit: cover;
+      background-color: #e2e8f0;
+    }
+
+    .album-info {
+      padding: 1.4rem;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    .album-meta {
+      font-size: 0.82rem;
+      color: var(--primary);
+      font-weight: 700;
+      margin-bottom: 0.4rem;
+    }
+
+    .album-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #1e293b;
+      margin-bottom: 0.5rem;
+    }
+
+    .album-desc {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* 燈箱視窗 (Lightbox Modal) */
+    .viewer-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(8px);
+      z-index: 9999;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 2rem 1.5rem;
+    }
+
+    .viewer-modal.active {
+      display: flex;
+    }
+
+    .viewer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto 1.5rem auto;
+      color: #ffffff;
+    }
+
+    .viewer-close-btn {
+      background: #334155;
+      color: #ffffff;
+      border: none;
+      font-size: 1rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .viewer-close-btn:hover {
+      background: #475569;
+    }
+
+    /* 相片網格 */
+    .photo-masonry {
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1.2rem;
+    }
+
+    .photo-masonry img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      background-color: #1e293b;
+    }
+
+    .photo-masonry img:hover {
+      transform: scale(1.03);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 頂部導覽列 -->
+  <nav class="nav-bar">
+    <a href="gallery.html" class="nav-brand">📷 NTUMESA 活動相簿</a>
+    <a href="index.html" class="home-btn">🏠 回系學會首頁</a>
+  </nav>
+
+  <!-- 主相簿清單 -->
+  <main class="container">
+    <div class="header-section">
+      <h1>系學會活動相簿回顧</h1>
+      <p>點選各活動相簿即可瀏覽完整精彩照片記錄</p>
+    </div>
+
+    <!-- 年份切換列 -->
+    <div id="year-tabs" class="year-tabs"></div>
+
+    <!-- 相簿展示網格 -->
+    <div id="albums-grid" class="albums-grid"></div>
+  </main>
+
+  <!-- 燈箱相片展開視窗 -->
+  <div id="viewer-modal" class="viewer-modal">
+    <div class="viewer-header">
+      <div>
+        <h2 id="modal-album-title" style="font-size: 1.6rem; font-weight: 800;"></h2>
+        <p id="modal-album-desc" style="color: #94a3b8; font-size: 0.95rem; margin-top: 0.25rem;"></p>
+      </div>
+      <button class="viewer-close-btn" onclick="closeViewer()">關閉 ✕</button>
+    </div>
+
+    <div id="photo-masonry" class="photo-masonry"></div>
+  </div>
+
+  <script>
+// 綁定發布的 gallery 分頁 CSV 網址 (gid=497116616)
+    const GALLERY_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTx0GJyuaRNXxtHNiN750VXs5IOkjA1hdOKsEEPVB7UluLglOm_F-vsix4cMoej9egFkAAdkLQfuVTS/pub?gid=497116616&single=true&output=csv";
+
+    let albumsData = [];
+    let currentYear = "ALL";
+
+    function loadGalleryData() {
+      const url = GALLERY_CSV_URL + (GALLERY_CSV_URL.includes('?') ? '&' : '?') + '_t=' + Date.now();
+
+      Papa.parse(url, {
+        download: true,
+        header: false, // 改用陣列讀取，避免表頭中英文不符問題
+        skipEmptyLines: true,
+        complete: function(results) {
+          console.log("CSV 原始讀取結果:", results.data);
+
+          if (!results.data || results.data.length <= 1) {
+            console.warn("試算表除了表頭外沒有資料列！");
+            renderAlbums();
+            return;
+          }
+
+          // 去掉第 1 列表頭，從第 2 列開始解析
+          const rows = results.data.slice(1);
+
+          albumsData = rows.map((row, index) => {
+            // 對應欄位順序：
+            // 0: year, 1: albumName, 2: folderUrl, 3: coverFileName, 
+            // 4: coverPreview, 5: coverUrl, 6: photoUrls, 7: date, 8: description
+            const year = (row[0] || "").trim() || "其他";
+            const albumName = (row[1] || "").trim() || `活動相簿 ${index + 1}`;
+            const coverUrl = (row[5] || "").trim();
+            const photoUrlsRaw = (row[6] || "").trim();
+            const date = (row[7] || "").trim();
+            const description = (row[8] || "").trim();
+
+            const photoUrls = photoUrlsRaw ? photoUrlsRaw.split(",").map(u => u.trim()).filter(Boolean) : [];
+
+            return {
+              year,
+              albumName,
+              coverUrl: coverUrl || (photoUrls.length > 0 ? photoUrls[0] : ""),
+              photoUrls,
+              date,
+              description
+            };
+          }).filter(album => album.albumName && (album.coverUrl || album.photoUrls.length > 0));
+
+          console.log("解析後的相簿資料:", albumsData);
+
+          renderYearTabs();
+          renderAlbums();
+        },
+        error: function(err) {
+          console.error("CSV 下載解析失敗:", err);
+          document.getElementById("albums-grid").innerHTML = `
+            <div style="grid-column: 1/-1; text-align: center; padding: 4rem; color: #ef4444;">
+              讀取試算表失敗，請確認 Google Sheets 是否已發布為 CSV。
+            </div>
+          `;
+        }
+      });
+    }
+
+    function renderYearTabs() {
+      const tabsContainer = document.getElementById("year-tabs");
+      const years = ["ALL", ...new Set(albumsData.map(a => a.year))];
+
+      tabsContainer.innerHTML = "";
+      years.forEach(year => {
+        const btn = document.createElement("button");
+        btn.className = `year-tab ${year === currentYear ? 'active' : ''}`;
+        btn.textContent = year === "ALL" ? "全部年份" : `${year} 學年度`;
+        btn.onclick = () => {
+          currentYear = year;
+          renderYearTabs();
+          renderAlbums();
+        };
+        tabsContainer.appendChild(btn);
+      });
+    }
+
+    function renderAlbums() {
+      const grid = document.getElementById("albums-grid");
+      grid.innerHTML = "";
+
+      const filtered = currentYear === "ALL" 
+        ? albumsData 
+        : albumsData.filter(a => a.year === currentYear);
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 4rem; color: #94a3b8;">目前尚無相簿資料</div>`;
+        return;
+      }
+
+      filtered.forEach(album => {
+        const card = document.createElement("div");
+        card.className = "album-card";
+        card.onclick = () => openViewer(album);
+
+        const cover = album.coverUrl || "https://images.unsplash.com/photo-1523580494863-6f3031224c94?w=600";
+
+        card.innerHTML = `
+          <img src="${cover}" class="album-cover" alt="${album.albumName}" loading="lazy">
+          <div class="album-info">
+            <div class="album-meta">📅 ${album.date || album.year + ' 學年度'} ｜ 共 ${album.photoUrls.length} 張相片</div>
+            <h3 class="album-title">${album.albumName}</h3>
+            <p class="album-desc">${album.description || '點擊瀏覽完整活動相簿。'}</p>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function openViewer(album) {
+      document.getElementById("modal-album-title").textContent = album.albumName;
+      document.getElementById("modal-album-desc").textContent = album.description;
+
+      const masonry = document.getElementById("photo-masonry");
+      masonry.innerHTML = "";
+
+      album.photoUrls.forEach(url => {
+        const img = document.createElement("img");
+        img.src = url;
+        img.loading = "lazy";
+        img.onclick = () => window.open(url, "_blank");
+        masonry.appendChild(img);
+      });
+
+      document.getElementById("viewer-modal").classList.add("active");
+      document.body.style.overflow = "hidden";
+    }
+
+    function closeViewer() {
+      document.getElementById("viewer-modal").classList.remove("active");
+      document.body.style.overflow = "auto";
+    }
+
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeViewer();
+    });
+
+    window.addEventListener("DOMContentLoaded", loadGalleryData);
+  </script>
+</body>
+</html>
