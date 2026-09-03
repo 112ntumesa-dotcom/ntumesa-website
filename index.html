@@ -274,6 +274,69 @@
   <div id="activities-container" class="activities-scroll-container" style="display: none;"></div>
 </section>
 
+<!-- ==========================================
+     活動日曆區塊 (Activity Calendar)
+     ========================================== -->
+<section id="calendar" class="calendar-section">
+  <div class="calendar-header">
+    <h2 class="calendar-title">活動日曆</h2>
+    <div class="calendar-subtitle">CALENDAR</div>
+  </div>
+
+  <!-- 年月導航與切換箭頭 -->
+  <div class="calendar-nav-bar">
+    <button class="cal-nav-btn" id="cal-prev-month" aria-label="上個月">‹</button>
+    <div class="cal-month-display" id="cal-month-display">2026 年 9 月</div>
+    <button class="cal-nav-btn" id="cal-next-month" aria-label="下個月">›</button>
+  </div>
+
+  <!-- 附圖樣式的星期列 (日 一 二 三 四 五 六) -->
+  <div class="cal-weekdays">
+    <div class="cal-weekday">日</div>
+    <div class="cal-weekday">一</div>
+    <div class="cal-weekday">二</div>
+    <div class="cal-weekday">三</div>
+    <div class="cal-weekday">四</div>
+    <div class="cal-weekday">五</div>
+    <div class="cal-weekday">六</div>
+  </div>
+
+  <!-- 日期方格容器 -->
+  <div class="cal-days-grid" id="cal-days-grid">
+    <!-- JS 會在此動態填入每月份的日期與跨天活動 -->
+  </div>
+
+  <!-- 點選日期展開詳細活動卡片 -->
+  <div class="cal-details-card" id="cal-details-card">
+    <div class="cal-details-header">
+      <span>📅</span>
+      <span id="cal-details-date-title">點選日期查看活動</span>
+    </div>
+    <div class="cal-details-list" id="cal-details-list"></div>
+  </div>
+</section>
+
+<!-- ==========================================
+     考古題與家產資料庫導引橫幅
+     ========================================== -->
+<section class="db-banner-section">
+  <div class="db-banner-card">
+    <div class="db-banner-content">
+      <h2 class="db-banner-title">NTUME Database</h2>
+      <div class="db-banner-subtitle">考古題與筆記家產資料庫</div>
+      <a href="files.html" class="db-banner-btn">搜尋考古題及筆記</a>
+    </div>
+    
+    <div class="db-banner-img-wrap">
+      <!-- 若已有筆記插圖可放 images/notes.png，未放置前先以內嵌插圖佔位 -->
+      <img src="images/book.png" 
+           onerror="this.src='https:/illustrations.popertee.com/illustrations/education-notebook.svg'" 
+           alt="筆記與考古題" 
+           class="db-banner-img">
+    </div>
+  </div>
+</section>
+
     <!-- 團隊介紹區塊 -->
 <section id="team" style="margin-bottom: 5rem;">
   <div class="team-section-header">
@@ -391,38 +454,7 @@ function renderAnnouncements(data) {
   containerEl.style.display = "flex";
 }
 
-/* 讀取公告 (含本地快取秒開機制) */
-function loadAnnouncements() {
-  // 1. 先讀取本地快取瞬間顯示
-  const cachedData = localStorage.getItem("ntumesa_announcements_cache");
-  if (cachedData) {
-    try {
-      renderAnnouncements(JSON.parse(cachedData));
-    } catch (e) {
-      console.warn("公告快取解析失敗", e);
-    }
-  }
 
-  // 2. 向 Google Sheets 發布的 CSV 請求最新資料
-  Papa.parse(CSV_CONFIG.announcementsUrl, {
-    download: true,
-    header: true,
-    skipEmptyLines: true,
-    complete: function(results) {
-      const published = results.data.filter(item => 
-        item.title && item.title.trim() !== '' && (!item.status || item.status.trim().toLowerCase() === 'published')
-      );
-      localStorage.setItem("ntumesa_announcements_cache", JSON.stringify(published));
-      renderAnnouncements(published);
-    },
-    error: function(err) {
-      console.error("載入活動失敗:", err);
-      if (!cachedData) {
-        document.getElementById("announcement-loading").textContent = "載入失敗，請重新整理頁面。";
-      }
-    }
-  });
-}
     /* 成員資料快取 */
 let membersCache = [];
 
@@ -501,6 +533,245 @@ contactModal.addEventListener("click", (e) => {
       loadAnnouncements();
       loadMembers();
     });
+
+
+
+/* ===================================================
+   活動公告與日曆整合邏輯 (修復初次載入與日期顯示)
+   =================================================== */
+let currentCalDate = new Date();
+let calendarEventsData = [];
+
+// 輔助函式：將日期物件轉為 YYYY-MM-DD
+function formatDateKey(dateObj) {
+  const y = dateObj.getFullYear();
+  const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const d = String(dateObj.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+// 輔助函式：取得活動的顯示日期文字 (支援跨天: 2026-07-10 ~ 2026-07-14)
+function getEventDateDisplay(item) {
+  const start = item.startDate || item.date;
+  const end = item.endDate;
+  if (!start && !end) return '即將公布';
+  if (start && (!end || end === start)) return start;
+  return `${start} ~ ${end}`;
+}
+
+// 輔助函式：判斷某日期是否在活動區間內
+function getEventsForDate(dateKey) {
+  return calendarEventsData.filter(event => {
+    const start = event.startDate || event.date;
+    if (!start) return false;
+    const end = event.endDate || start;
+    return dateKey >= start && dateKey <= end;
+  });
+}
+
+/* 1. 渲染橫向滑動活動卡片 */
+function renderAnnouncements(data) {
+  const loadingEl = document.getElementById("announcement-loading");
+  const containerEl = document.getElementById("activities-container") || document.getElementById("announcement-list");
+
+  if (!containerEl) return;
+
+  if (!data || data.length === 0) {
+    if (loadingEl) loadingEl.style.display = "none";
+    containerEl.style.display = "flex";
+    containerEl.innerHTML = "<p style='color: #64748b; padding: 1rem;'>目前暫無最新活動。</p>";
+    return;
+  }
+
+  containerEl.innerHTML = "";
+
+  data.forEach(item => {
+    const imgUrl = (item.photoUrl && item.photoUrl.trim() !== '') 
+      ? item.photoUrl 
+      : 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=80';
+
+    // 取得正確的日期字串 (單日或區間)
+    const dateText = getEventDateDisplay(item);
+
+    const card = document.createElement("div");
+    card.className = "activity-card";
+    card.innerHTML = `
+      <div class="activity-card-img-wrap">
+        <img src="${imgUrl}" alt="${item.title || ''}" class="activity-card-img" loading="lazy">
+        <span class="activity-badge">${item.category || '活動'}</span>
+      </div>
+      <div class="activity-card-body">
+        <div class="activity-date">📅 ${dateText}</div>
+        <div class="activity-title">${item.title || '活動名稱'}</div>
+        <div class="activity-desc">${item.description || '暫無詳細說明。'}</div>
+        <a href="${item.link || '#'}" target="${item.link ? '_blank' : '_self'}" class="activity-btn">
+          ${item.buttonText || '查看詳情'} →
+        </a>
+      </div>
+    `;
+    containerEl.appendChild(card);
+  });
+
+  if (loadingEl) loadingEl.style.display = "none";
+  containerEl.style.display = "flex";
+}
+
+/* 2. 渲染活動日曆 (支援直接點擊標籤開啟活動連結) */
+function renderCalendar() {
+  const year = currentCalDate.getFullYear();
+  const month = currentCalDate.getMonth(); // 0-indexed
+
+  // 更新頂部顯示的年份與月份
+  const monthDisplayEl = document.getElementById("cal-month-display");
+  if (monthDisplayEl) {
+    monthDisplayEl.textContent = `${year} 年 ${month + 1} 月`;
+  }
+
+  const grid = document.getElementById("cal-days-grid");
+  if (!grid) return;
+  grid.innerHTML = "";
+
+  const firstDayIndex = new Date(year, month, 1).getDay();
+  const totalDays = new Date(year, month + 1, 0).getDate();
+  const prevMonthTotalDays = new Date(year, month, 0).getDate();
+  const todayStr = formatDateKey(new Date());
+
+  // 1. 上個月尾巴格子
+  for (let i = firstDayIndex - 1; i >= 0; i--) {
+    const dayNum = prevMonthTotalDays - i;
+    const cell = document.createElement("div");
+    cell.className = "cal-day-cell other-month";
+    cell.innerHTML = `<div class="cal-day-num">${dayNum}</div>`;
+    grid.appendChild(cell);
+  }
+
+  // 2. 本月日期格子
+  for (let day = 1; day <= totalDays; day++) {
+    const thisDate = new Date(year, month, day);
+    const dateKey = formatDateKey(thisDate);
+    const eventsOnThisDay = getEventsForDate(dateKey);
+
+    const cell = document.createElement("div");
+    cell.className = "cal-day-cell";
+    if (dateKey === todayStr) {
+      cell.classList.add("today");
+    }
+
+    // 建立日期數字
+    const dayNumEl = document.createElement("div");
+    dayNumEl.className = "cal-day-num";
+    dayNumEl.textContent = day;
+    cell.appendChild(dayNumEl);
+
+    // 建立活動標籤容器
+    const chipsContainer = document.createElement("div");
+    chipsContainer.className = "cal-event-chips";
+
+    eventsOnThisDay.forEach(ev => {
+      const start = ev.startDate || ev.date;
+      const end = ev.endDate || start;
+      const isMulti = (end && end !== start);
+
+      const chip = document.createElement("div");
+      chip.className = `cal-event-chip ${isMulti ? 'multi-day' : ''}`;
+      chip.textContent = ev.title;
+      chip.title = ev.link ? `點擊前往：${ev.title}` : ev.title;
+
+      // 關鍵：直接點擊活動標籤時開啟外部連結或詳情
+      chip.addEventListener("click", (e) => {
+        e.stopPropagation(); // 阻止事件冒泡，避免同時觸發底層格子的 click
+        if (ev.link && ev.link.trim() !== '' && ev.link.trim() !== '#') {
+          window.open(ev.link, "_blank"); // 在新分頁開啟活動連結
+        } else {
+          // 若無連結，則展開下方詳情卡片
+          showDateDetails(dateKey, [ev]);
+        }
+      });
+
+      chipsContainer.appendChild(chip);
+    });
+
+    cell.appendChild(chipsContainer);
+
+    // 點擊日期格子空白處，依然展開該天所有活動列表
+    cell.addEventListener("click", () => showDateDetails(dateKey, eventsOnThisDay));
+    grid.appendChild(cell);
+  }
+
+  // 3. 下個月開頭補滿
+  const totalRendered = firstDayIndex + totalDays;
+  const remainingCells = (7 - (totalRendered % 7)) % 7;
+  for (let nextDay = 1; nextDay <= remainingCells; nextDay++) {
+    const cell = document.createElement("div");
+    cell.className = "cal-day-cell other-month";
+    cell.innerHTML = `<div class="cal-day-num">${nextDay}</div>`;
+    grid.appendChild(cell);
+  }
+}
+/* 3. 讀取公告與日曆資料 (含快取秒開) */
+function loadAnnouncements() {
+  // 先嘗試從快取讀取
+  const cachedData = localStorage.getItem("ntumesa_announcements_cache");
+  if (cachedData) {
+    try {
+      const parsed = JSON.parse(cachedData);
+      calendarEventsData = parsed;
+      renderAnnouncements(parsed);
+      renderCalendar(); // 快取有資料時立刻畫出日曆
+    } catch (e) {
+      console.warn("公告快取解析失敗", e);
+    }
+  }
+
+  // 從 Google Sheets 抓取最新資料
+  Papa.parse(CSV_CONFIG.announcementsUrl, {
+    download: true,
+    header: true,
+    skipEmptyLines: true,
+    complete: function(results) {
+      const published = results.data.filter(item => 
+        item.title && item.title.trim() !== '' && (!item.status || item.status.trim().toLowerCase() === 'published')
+      );
+      
+      calendarEventsData = published;
+      localStorage.setItem("ntumesa_announcements_cache", JSON.stringify(published));
+      
+      // 重新渲染公告卡片與日曆
+      renderAnnouncements(published);
+      renderCalendar();
+    },
+    error: function(err) {
+      console.error("載入活動失敗:", err);
+      if (!cachedData) {
+        const loadingEl = document.getElementById("announcement-loading");
+        if (loadingEl) loadingEl.textContent = "載入活動失敗，請重新整理頁面。";
+      }
+    }
+  });
+}
+
+// 綁定切換月份按鈕
+const prevBtn = document.getElementById("cal-prev-month");
+const nextBtn = document.getElementById("cal-next-month");
+if (prevBtn) {
+  prevBtn.addEventListener("click", () => {
+    currentCalDate.setMonth(currentCalDate.getMonth() - 1);
+    renderCalendar();
+  });
+}
+if (nextBtn) {
+  nextBtn.addEventListener("click", () => {
+    currentCalDate.setMonth(currentCalDate.getMonth() + 1);
+    renderCalendar();
+  });
+}
+
+/* 頁面載入時的初始化 */
+document.addEventListener("DOMContentLoaded", () => {
+  renderCalendar();   // 進入頁面第一時間先畫出當前月份的日曆格子
+  loadAnnouncements();
+  loadMembers();
+});
   </script>
 </body>
 </html>
