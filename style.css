@@ -1141,8 +1141,9 @@ footer {
 }
 
 .db-banner-img {
-  width: 240px;
-  height: auto;
+  mix-blend-mode: multiply;
+  /* 如果覺得太靠近邊緣，也可以微調大小與陰影 */
+  max-height: 180px;
   object-fit: contain;
 }
 
