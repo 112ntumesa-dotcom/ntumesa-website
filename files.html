@@ -415,17 +415,59 @@
 </head>
 <body>
 
-  <!-- ================= 登入驗證覆蓋遮罩 (未通過時鎖定) ================= -->
+ <!-- ================= 登入驗證覆蓋遮罩 (雙軌並行版) ================= -->
   <div id="auth-overlay" class="auth-overlay">
-    <div class="auth-modal">
-      <div style="font-size: 2.8rem;">🔒</div>
+    <div class="auth-modal" style="max-width: 460px;">
+      <div style="font-size: 2.6rem; margin-bottom: 0.2rem;">🔒</div>
       <h2>NTUME 家產資料庫</h2>
-      <p>本資料庫僅限台大機械系在校生與系友查閱。<br>請登入 <strong>@g.ntu.edu.tw</strong> 學校信箱進行驗證。</p>
-      
-      <!-- Google 官方 Sign-In 按鈕掛載區 -->
-      <div id="google-signin-btn" style="display: flex; justify-content: center;"></div>
+      <p style="margin-bottom: 1.5rem;">僅限台大機械系在校生查閱，請選擇登入方式：</p>
 
-      <div id="auth-error-msg" class="auth-error"></div>
+      <!-- 切換分頁按鈕 -->
+      <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; background: #f1f5f9; padding: 4px; border-radius: 10px;">
+        <button id="tab-google-btn" onclick="switchLoginMethod('google')" 
+                style="flex: 1; border: none; padding: 0.55rem; border-radius: 8px; font-weight: 700; font-size: 0.9rem; cursor: pointer; background: #ffffff; color: var(--primary); box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+          Google 一鍵登入
+        </button>
+        <button id="tab-otp-btn" onclick="switchLoginMethod('otp')" 
+                style="flex: 1; border: none; padding: 0.55rem; border-radius: 8px; font-weight: 700; font-size: 0.9rem; cursor: pointer; background: transparent; color: #64748b;">
+          計中信箱驗證碼
+        </button>
+      </div>
+
+      <!-- 管道 1：Google 官方 Sign-In (適合 @g.ntu.edu.tw) -->
+      <div id="method-google-panel">
+        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1.2rem;">
+          支援 <strong>@g.ntu.edu.tw</strong> 學生帳號快速授權登入
+        </p>
+        <div id="google-signin-btn" style="display: flex; justify-content: center;"></div>
+      </div>
+
+      <!-- 管道 2：NTU Webmail 6位數驗證碼 (適合 @ntu.edu.tw) -->
+      <div id="method-otp-panel" style="display: none;">
+        <!-- 步驟 1：輸入學號發送 -->
+        <div id="otp-step-1">
+          <input type="text" id="otp-student-id" placeholder="請輸入學號 (如 b13502087)" 
+                 style="width: 100%; box-sizing: border-box; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 10px; font-size: 0.95rem; margin-bottom: 0.8rem; outline: none;">
+          <button id="send-otp-btn" onclick="sendOtpCode()" class="file-download-btn-sm" style="width: 100%; padding: 0.75rem; font-size: 0.95rem; cursor: pointer; border: none;">
+            寄送驗證碼至 @ntu.edu.tw
+          </button>
+        </div>
+
+        <!-- 步驟 2：輸入驗證碼 -->
+        <div id="otp-step-2" style="display: none;">
+          <p id="otp-sent-tip" style="font-size: 0.85rem; color: #0284c7; margin-bottom: 0.8rem;"></p>
+          <input type="text" id="otp-code-input" maxlength="6" placeholder="請輸入 6 位數驗證碼" 
+                 style="width: 100%; box-sizing: border-box; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 10px; font-size: 1.1rem; text-align: center; letter-spacing: 4px; margin-bottom: 0.8rem; outline: none;">
+          <button id="verify-otp-btn" onclick="verifyOtpCode()" class="file-download-btn-sm" style="width: 100%; padding: 0.75rem; font-size: 0.95rem; cursor: pointer; border: none;">
+            驗證並進入資料庫
+          </button>
+          <button onclick="resetOtpStep()" style="background: none; border: none; color: #64748b; font-size: 0.85rem; margin-top: 0.6rem; cursor: pointer; text-decoration: underline;">
+            更換學號
+          </button>
+        </div>
+      </div>
+
+      <div id="auth-error-msg" class="auth-error" style="margin-top: 1rem;"></div>
     </div>
   </div>
 
@@ -451,7 +493,7 @@
   <main class="database-main">
     <div class="db-header">
       <h1>考古題與筆記檢索</h1>
-      <p></p>
+      <p>點選檔案可直接前往 Google Drive 預覽或下載。支援依年級、類別與關鍵字過濾。</p>
     </div>
 
     <!-- 搜尋與篩選列 -->
@@ -507,8 +549,7 @@
         "b12502002@g.ntu.edu.tw"
       ]
     };
-
-    let allFiles = [];
+    const OTP_GAS_URL = "https://script.google.com/macros/s/AKfycbxyVtSL7Oh9FAe-4rEVZOqg9ZHKo3XRPxvofppNugFT3txN-PMEhE1nUYQlES-HoMAR/exec";    let allFiles = [];
 
     /* ========================================================
        2. Google 登入驗證與權限檢查
@@ -599,34 +640,42 @@
       });
     }
 
-    // 核心身分與權限驗證 (唯一且完整版本)
+// 核心身分與權限驗證 (支援 @ntu.edu.tw 與 @g.ntu.edu.tw)
     async function verifyUserPermission(userEmail) {
       const errEl = document.getElementById("auth-error-msg");
       errEl.style.display = "none";
 
-      const isNtuEmail = userEmail.endsWith("@g.ntu.edu.tw") || userEmail.endsWith("@ntu.edu.tw");
+      const cleanEmail = userEmail.toLowerCase().trim();
+
+      // 第一關：網域檢查 (同時允許兩種信箱)
+      const isNtuEmail = cleanEmail.endsWith("@g.ntu.edu.tw") || cleanEmail.endsWith("@ntu.edu.tw");
       if (!isNtuEmail) {
         errEl.style.display = "block";
-        errEl.innerHTML = `⚠️ 存取失敗：<strong>${userEmail}</strong> 不是台大信箱。<br>請切換至台大學生帳號後重新登入。`;
+        errEl.innerHTML = `⚠️ 存取失敗：<strong>${userEmail}</strong> 不是台大信箱。<br>請使用 @ntu.edu.tw 或 @g.ntu.edu.tw 登入。`;
         return false;
       }
 
-      const studentId = userEmail.replace("@g.ntu.edu.tw", "").replace("@ntu.edu.tw", "").trim();
+      // 截取純學號 (例如 b12502001)
+      const studentId = cleanEmail.replace("@g.ntu.edu.tw", "").replace("@ntu.edu.tw", "").trim();
 
+      // 本地緊急備援名單檢查
       const localAllowed = CONFIG.allowedEmails.map(e => e.toLowerCase().replace("@g.ntu.edu.tw", "").replace("@ntu.edu.tw", "").trim());
       if (localAllowed.includes(studentId)) {
         return true;
       }
 
+      // 第二關：向 Google Sheets 比對授權白名單
       if (CONFIG.allowedUsersCsvUrl && CONFIG.allowedUsersCsvUrl.trim() !== "") {
         try {
           const { activeUsers, suspendedUsers } = await fetchRemoteWhitelist(CONFIG.allowedUsersCsvUrl);
 
-          if (activeUsers.includes(studentId) || activeUsers.includes(userEmail)) {
+          // 只要白名單有登記該純學號或信箱，且狀態為啟用即放行
+          if (activeUsers.includes(studentId) || activeUsers.includes(cleanEmail)) {
             return true;
           }
 
-          if (suspendedUsers.includes(studentId) || suspendedUsers.includes(userEmail)) {
+          // 名單內被標記為停用
+          if (suspendedUsers.includes(studentId) || suspendedUsers.includes(cleanEmail)) {
             errEl.style.display = "block";
             errEl.innerHTML = `⚠️ 權限暫停：學號 <strong>${studentId}</strong> 的存取權限目前處於停用狀態。<br>如有疑問請聯絡系學會管理員。`;
             return false;
@@ -636,11 +685,11 @@
         }
       }
 
+      // 未在名單中
       errEl.style.display = "block";
-      errEl.innerHTML = `⚠️ 存取被拒：學號 <strong>${studentId}</strong> 未在授權名單中。<br>如需開通請洽系學會學術部或管理員。`;
+      errEl.innerHTML = `⚠️ 存取被拒：學號 <strong>${studentId}</strong> 未在授權名單中。<br>如需開通請洽系學會學術部。`;
       return false;
     }
-
     async function handleCredentialResponse(response) {
       const user = parseJwt(response.credential);
       if (!user || !user.email) return;
@@ -858,6 +907,154 @@ window.addEventListener("DOMContentLoaded", async () => {
     }
   }, 100);
 });
+
+
+
+
+    // 1. 切換分頁 UI 邏輯
+    function switchLoginMethod(method) {
+      const gPanel = document.getElementById("method-google-panel");
+      const oPanel = document.getElementById("method-otp-panel");
+      const gBtn = document.getElementById("tab-google-btn");
+      const oBtn = document.getElementById("tab-otp-btn");
+      const errEl = document.getElementById("auth-error-msg");
+      errEl.style.display = "none";
+
+      if (method === 'google') {
+        gPanel.style.display = "block";
+        oPanel.style.display = "none";
+        gBtn.style.background = "#ffffff";
+        gBtn.style.color = "var(--primary)";
+        gBtn.style.boxShadow = "0 1px 3px rgba(0,0,0,0.1)";
+        oBtn.style.background = "transparent";
+        oBtn.style.color = "#64748b";
+        oBtn.style.boxShadow = "none";
+      } else {
+        gPanel.style.display = "none";
+        oPanel.style.display = "block";
+        oBtn.style.background = "#ffffff";
+        oBtn.style.color = "var(--primary)";
+        oBtn.style.boxShadow = "0 1px 3px rgba(0,0,0,0.1)";
+        gBtn.style.background = "transparent";
+        gBtn.style.color = "#64748b";
+        gBtn.style.boxShadow = "none";
+      }
+    }
+
+// 1. JSONP 工具函式（穿透跨域限制）
+    function callGasJsonp(params) {
+      return new Promise((resolve, reject) => {
+        const callbackName = 'gas_cb_' + Math.round(100000 * Math.random());
+        window[callbackName] = function(data) {
+          delete window[callbackName];
+          if (script.parentNode) script.parentNode.removeChild(script);
+          resolve(data);
+        };
+
+        const queryString = new URLSearchParams({
+          ...params,
+          callback: callbackName
+        }).toString();
+
+        const script = document.createElement('script');
+        script.src = `${OTP_GAS_URL}${OTP_GAS_URL.includes('?') ? '&' : '?'}${queryString}`;
+        script.onerror = function(err) {
+          delete window[callbackName];
+          if (script.parentNode) script.parentNode.removeChild(script);
+          reject(err);
+        };
+        document.body.appendChild(script);
+      });
+    }
+
+    // 2. 發送驗證碼
+    async function sendOtpCode() {
+      const studentIdInput = document.getElementById("otp-student-id").value.trim();
+      const errEl = document.getElementById("auth-error-msg");
+      const sendBtn = document.getElementById("send-otp-btn");
+      errEl.style.display = "none";
+
+      if (!studentIdInput) {
+        errEl.style.display = "block";
+        errEl.textContent = "請輸入您的學號！";
+        return;
+      }
+
+      sendBtn.disabled = true;
+      sendBtn.textContent = "正在發送中...";
+
+      try {
+        const result = await callGasJsonp({
+          action: "sendOtp",
+          studentId: studentIdInput
+        });
+
+        if (result.success) {
+          document.getElementById("otp-step-1").style.display = "none";
+          document.getElementById("otp-step-2").style.display = "block";
+          document.getElementById("otp-sent-tip").textContent = result.message;
+        } else {
+          errEl.style.display = "block";
+          errEl.textContent = result.message;
+        }
+      } catch (err) {
+        console.error("發送失敗:", err);
+        errEl.style.display = "block";
+        errEl.textContent = "連線異常，請確認網路或稍後再試。";
+      } finally {
+        sendBtn.disabled = false;
+        sendBtn.textContent = "寄送驗證碼至 @ntu.edu.tw";
+      }
+    }
+
+    // 3. 核對驗證碼並解鎖資料庫
+    async function verifyOtpCode() {
+      const studentIdInput = document.getElementById("otp-student-id").value.trim();
+      const codeInput = document.getElementById("otp-code-input").value.trim();
+      const errEl = document.getElementById("auth-error-msg");
+      const verifyBtn = document.getElementById("verify-otp-btn");
+      errEl.style.display = "none";
+
+      if (!codeInput || codeInput.length !== 6) {
+        errEl.style.display = "block";
+        errEl.textContent = "請輸入完整的 6 位數驗證碼！";
+        return;
+      }
+
+      verifyBtn.disabled = true;
+      verifyBtn.textContent = "驗證中...";
+
+      try {
+        const result = await callGasJsonp({
+          action: "verifyOtp",
+          studentId: studentIdInput,
+          otp: codeInput
+        });
+
+        if (result.success) {
+          const userData = { email: result.email, name: studentIdInput };
+          sessionStorage.setItem("ntumesa_auth_user", JSON.stringify(userData));
+          unlockDatabase(userData);
+        } else {
+          errEl.style.display = "block";
+          errEl.textContent = result.message;
+        }
+      } catch (err) {
+        console.error("驗證失敗:", err);
+        errEl.style.display = "block";
+        errEl.textContent = "驗證過程發生錯誤，請稍後再試。";
+      } finally {
+        verifyBtn.disabled = false;
+        verifyBtn.textContent = "驗證並進入資料庫";
+      }
+    }
+
+    // 重新輸入學號按鈕
+    function resetOtpStep() {
+      document.getElementById("otp-step-1").style.display = "block";
+      document.getElementById("otp-step-2").style.display = "none";
+      document.getElementById("auth-error-msg").style.display = "none";
+    }
   </script>
 </body>
 </html>
