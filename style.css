@@ -828,3 +828,341 @@ footer {
 .activity-btn:hover {
   background-color: #0369a1;
 }
+
+/* ===================================================
+   活動日曆區塊 (Activity Calendar)
+   =================================================== */
+.calendar-section {
+  max-width: 950px;
+  margin: 4rem auto;
+  padding: 0 1.5rem;
+}
+
+.calendar-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.calendar-title {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #1e293b;
+  letter-spacing: 2px;
+  margin-bottom: 0.25rem;
+}
+
+.calendar-subtitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #64748b;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+/* 頂部切換與星期導覽列 (完全貼合附圖) */
+.calendar-nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.cal-nav-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #334155;
+  cursor: pointer;
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.cal-nav-btn:hover {
+  background-color: #f1f5f9;
+  color: #0284c7;
+}
+
+.cal-month-display {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1e293b;
+  min-width: 140px;
+  text-align: center;
+}
+
+/* 附圖中的圓角邊框星期欄 */
+.cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border: 1px solid #cbd5e1;
+  border-radius: 30px;
+  overflow: hidden;
+  background: #ffffff;
+  margin-bottom: 1rem;
+}
+
+.cal-weekday {
+  text-align: center;
+  padding: 0.6rem 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #334155;
+  border-right: 1px solid #e2e8f0;
+}
+
+.cal-weekday:last-child {
+  border-right: none;
+}
+
+/* 日期網格 (7x5 或 7x6) */
+.cal-days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  background: #f8fafc;
+  padding: 10px;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+}
+
+.cal-day-cell {
+  background: #ffffff;
+  border-radius: 10px;
+  min-height: 85px;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #f1f5f9;
+  transition: all 0.2s;
+  cursor: pointer;
+  position: relative;
+}
+
+.cal-day-cell:hover {
+  border-color: #0284c7;
+  box-shadow: 0 4px 10px rgba(2, 132, 199, 0.08);
+}
+
+.cal-day-cell.other-month {
+  background: #f8fafc;
+  color: #cbd5e1;
+  cursor: default;
+}
+
+.cal-day-cell.other-month:hover {
+  border-color: #f1f5f9;
+  box-shadow: none;
+}
+
+.cal-day-cell.today .cal-day-num {
+  background: #0284c7;
+  color: #ffffff;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cal-day-num {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #475569;
+  margin-bottom: 4px;
+}
+
+/* 日期格內的活動標籤 (支援多天活動色條) */
+.cal-event-chips {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  overflow: hidden;
+}
+
+/* 日期格內的活動標籤 (支援點擊開啟連結) */
+.cal-event-chip {
+  font-size: 0.72rem;
+  padding: 3px 6px;
+  border-radius: 4px;
+  background: #e0f2fe;
+  color: #0369a1;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-left: 3px solid #0284c7;
+  cursor: pointer;                 /* 滑鼠移上去變小手 */
+  transition: all 0.15s ease;
+  display: block;
+  text-decoration: none;
+}
+
+.cal-event-chip:hover {
+  filter: brightness(0.95);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+}
+
+/* 跨天活動持續標籤 */
+.cal-event-chip.multi-day {
+  background: #fef3c7;
+  color: #92400e;
+  border-left-color: #f59e0b;
+}
+
+.cal-event-chip.multi-day:hover {
+  background: #fde68a;
+}
+
+/* 當天活動詳細面板 */
+.cal-details-card {
+  margin-top: 1.5rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  display: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.cal-details-card.active {
+  display: block;
+}
+
+.cal-details-header {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cal-details-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.cal-detail-item {
+  padding: 0.75rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  border-left: 4px solid #0284c7;
+}
+
+@media (max-width: 640px) {
+  .cal-day-cell {
+    min-height: 60px;
+    padding: 4px;
+  }
+  .cal-event-chip {
+    font-size: 0.65rem;
+    padding: 1px 3px;
+  }
+  .cal-weekdays {
+    border-radius: 20px;
+  }
+}
+
+
+/* ===================================================
+   資料庫橫幅區塊 (NTUME Database Banner)
+   =================================================== */
+.db-banner-section {
+  max-width: 1100px;
+  margin: 3.5rem auto;
+  padding: 0 1.5rem;
+}
+
+.db-banner-card {
+  background-color: #dbeafe;
+  border-radius: 28px;
+  padding: 3.5rem 4rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 6px 20px rgba(191, 219, 254, 0.35);
+}
+
+.db-banner-content {
+  max-width: 500px;
+}
+
+.db-banner-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #1e293b;
+  margin-bottom: 0.4rem;
+  letter-spacing: -0.5px;
+}
+
+.db-banner-subtitle {
+  font-size: 1.15rem;
+  color: #334155;
+  font-weight: 600;
+  margin-bottom: 2.2rem;
+}
+
+.db-banner-btn {
+  display: inline-block;
+  padding: 0.75rem 2.2rem;
+  border: 1.5px solid #475569;
+  border-radius: 9999px;
+  color: #1e293b;
+  background: transparent;
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.db-banner-btn:hover {
+  background-color: #ffffff;
+  border-color: #0284c7;
+  color: #0284c7;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.15);
+}
+
+.db-banner-img-wrap {
+  flex-shrink: 0;
+  margin-left: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.db-banner-img {
+  width: 240px;
+  height: auto;
+  object-fit: contain;
+}
+
+@media (max-width: 768px) {
+  .db-banner-card {
+    flex-direction: column-reverse;
+    text-align: center;
+    padding: 2.5rem 1.5rem;
+    gap: 2rem;
+  }
+
+  .db-banner-img-wrap {
+    margin-left: 0;
+  }
+
+  .db-banner-img {
+    width: 180px;
+  }
+
+  .db-banner-subtitle {
+    margin-bottom: 1.8rem;
+  }
+}
