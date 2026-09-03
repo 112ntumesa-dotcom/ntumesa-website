@@ -1,189 +1,863 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>資源與檔案下載 | NTUMESA</title>
-  <link rel="stylesheet" href="style.css" />
-  <!-- 引入極速輕量 CSV 解析庫 -->
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NTUME Database - 考古題與筆記家產資料庫</title>
+  
+  <!-- 引入網站主要樣式 (若已有 style.css) -->
+  <link rel="stylesheet" href="style.css">
+
+  <!-- 引入 PapaParse 解析 Google Sheets CSV -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+  <!-- 引入 Google Identity Services 官方 SDK -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+  <style>
+    /* =========================================
+       頁面基礎與版面
+       ========================================= */
+    :root {
+      --primary: #0284c7;
+      --primary-hover: #0369a1;
+      --bg-light: #f8fafc;
+      --text-dark: #0f172a;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans TC", sans-serif;
+      background-color: var(--bg-light);
+      color: var(--text-dark);
+      min-height: 100vh;
+    }
+
+    /* 頂部導覽列 */
+    .db-nav {
+      background: #ffffff;
+      border-bottom: 1px solid var(--border-color);
+      padding: 0.9rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .db-nav-brand {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--primary);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .db-nav-brand span {
+      color: var(--text-dark);
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .db-nav-user {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .user-badge {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .logout-btn {
+      background: #fee2e2;
+      color: #dc2626;
+      border: 1px solid #fecaca;
+      padding: 0.4rem 0.9rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .logout-btn:hover {
+      background: #fca5a5;
+    }
+
+    .home-link-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: #f1f5f9;
+      color: #334155;
+      border: 1px solid var(--border-color);
+      padding: 0.4rem 0.85rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .home-link-btn:hover {
+      background: #e2e8f0;
+      color: var(--primary);
+    }
+
+    /* =========================================
+       未登入驗證遮罩 (Auth Overlay)
+       ========================================= */
+    .auth-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.82);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding: 1.5rem;
+    }
+
+    .auth-modal {
+      background: #ffffff;
+      padding: 2.8rem 2.2rem;
+      border-radius: 24px;
+      max-width: 440px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    }
+
+    .auth-modal h2 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin: 0.8rem 0 0.4rem 0;
+      color: var(--text-dark);
+    }
+
+    .auth-modal p {
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 2rem;
+    }
+
+    .auth-error {
+      display: none;
+      background: #fee2e2;
+      color: #dc2626;
+      font-size: 0.88rem;
+      padding: 0.8rem 1rem;
+      border-radius: 10px;
+      margin-top: 1.25rem;
+      text-align: left;
+      line-height: 1.4;
+    }
+
+    /* =========================================
+       主資料庫內容區塊
+       ========================================= */
+    .database-main {
+      max-width: 1160px;
+      margin: 2.5rem auto 4rem auto;
+      padding: 0 1.5rem;
+    }
+
+    .db-header {
+      margin-bottom: 2rem;
+    }
+
+    .db-header h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      margin: 0 0 0.5rem 0;
+      color: var(--text-dark);
+    }
+
+    .db-header p {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 1rem;
+    }
+
+    /* 搜尋與篩選列 */
+    .db-filter-bar {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      background: #ffffff;
+      padding: 1.2rem;
+      border-radius: 16px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+      margin-bottom: 1.5rem;
+    }
+
+    .search-box {
+      flex: 2;
+      min-width: 260px;
+      position: relative;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #94a3b8;
+      font-size: 1rem;
+    }
+
+    .search-box input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 0.75rem 1rem 0.75rem 2.6rem;
+      border: 1.5px solid var(--border-color);
+      border-radius: 10px;
+      font-size: 0.95rem;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    .search-box input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12);
+    }
+
+    .filter-select-wrap {
+      flex: 1;
+      min-width: 160px;
+    }
+
+    .filter-select-wrap select {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 0.75rem 1rem;
+      border: 1.5px solid var(--border-color);
+      border-radius: 10px;
+      background-color: #ffffff;
+      font-size: 0.95rem;
+      color: var(--text-dark);
+      outline: none;
+      cursor: pointer;
+    }
+
+    .filter-select-wrap select:focus {
+      border-color: var(--primary);
+    }
+
+    .db-status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 1.25rem;
+      padding: 0 0.25rem;
+    }
+
+/* =========================================
+       檔案列表視圖 (List Table View)
+       ========================================= */
+    .file-list-container {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+    }
+
+    /* 標題列 (桌機版顯示) */
+    .file-list-header {
+      display: grid;
+      grid-template-columns: 1.8fr 1.1fr 1fr 1fr 1.6fr 130px;
+      gap: 1rem;
+      padding: 0.9rem 1.25rem;
+      background-color: #f8fafc;
+      border-bottom: 1.5px solid var(--border-color);
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      align-items: center;
+    }
+
+    /* 單列項目 */
+    .file-row {
+      display: grid;
+      grid-template-columns: 1.8fr 1.1fr 1fr 1fr 1.6fr 130px;
+      gap: 1rem;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      align-items: center;
+      transition: background-color 0.15s ease;
+      font-size: 0.92rem;
+    }
+
+    .file-row:last-child {
+      border-bottom: none;
+    }
+
+    .file-row:hover {
+      background-color: #f1f5f9;
+    }
+
+    .file-col-course {
+      font-weight: 700;
+      color: var(--text-dark);
+      font-size: 1rem;
+    }
+
+    .file-col-tags {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+
+    .badge-tag {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0.2rem 0.5rem;
+      border-radius: 6px;
+      white-space: nowrap;
+    }
+
+    .badge-tag.exam {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .badge-tag.notes {
+      background: #e0e7ff;
+      color: #4338ca;
+    }
+
+    .badge-tag.grade {
+      background: #f1f5f9;
+      color: #475569;
+    }
+
+    .file-col-desc {
+      color: #64748b;
+      font-size: 0.85rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .file-col-action {
+      text-align: right;
+    }
+
+    .file-download-btn-sm {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      background: var(--primary);
+      color: #ffffff;
+      padding: 0.45rem 0.85rem;
+      border-radius: 8px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+
+    .file-download-btn-sm:hover {
+      background: var(--primary-hover);
+    }
+
+    /* 手機版自適應 */
+    @media (max-width: 860px) {
+      .file-list-header {
+        display: none;
+      }
+      .file-row {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+        padding: 1.1rem;
+      }
+      .file-col-desc {
+        white-space: normal;
+      }
+      .file-col-action {
+        width: 100%;
+        margin-top: 0.4rem;
+      }
+      .file-download-btn-sm {
+        width: 100%;
+      }
+    }
+    @media (max-width: 768px) {
+      .db-filter-bar {
+        flex-direction: column;
+      }
+      .filter-select-wrap {
+        width: 100%;
+      }
+    }
+  </style>
 </head>
 <body>
-  <!-- 獨立導覽列 -->
-  <header>
-    <div class="nav-wrap">
-      <a href="index.html" class="site-title">⚙️ NTUMESA 臺大機械系學會</a>
-      <nav>
-        <ul>
-          <li><a href="index.html">首頁</a></li>
-          <li><a href="files.html" class="active">資源下載專區</a></li>
-        </ul>
-      </nav>
-    </div>
-  </header>
 
-  <main>
-    <section style="text-align: center; margin-bottom: 2.5rem;">
-      <h1 style="font-size: 2.2rem; color: var(--primary-color); margin-bottom: 0.5rem;">系會檔案與課業資源專區</h1>
-      <p style="color: var(--text-secondary); font-size: 1.05rem;">提供系會章程、活動報名簡章、以及各科課業學習資源共享</p>
-    </section>
-
-    <!-- 檔案上傳區塊（上傳後自動傳遞至 Apps Script 存入 Google Drive） -->
-    <div class="upload-box" id="drop-zone">
-      <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📁</div>
-      <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">上傳新檔案 / 課業考古資料</h3>
-      <p style="color: var(--text-secondary); font-size: 0.9rem;">支援點擊選擇或直接拖曳檔案至此區域</p>
+  <!-- ================= 登入驗證覆蓋遮罩 (未通過時鎖定) ================= -->
+  <div id="auth-overlay" class="auth-overlay">
+    <div class="auth-modal">
+      <div style="font-size: 2.8rem;">🔒</div>
+      <h2>NTUME 家產資料庫</h2>
+      <p>本資料庫僅限台大機械系在校生與系友查閱。<br>請登入 <strong>@g.ntu.edu.tw</strong> 學校信箱進行驗證。</p>
       
-      <div style="margin-top: 1.25rem;">
-        <label class="btn" for="file-input">選取電腦中的檔案</label>
-        <input type="file" id="file-input" style="display: none;" />
+      <!-- Google 官方 Sign-In 按鈕掛載區 -->
+      <div id="google-signin-btn" style="display: flex; justify-content: center;"></div>
+
+      <div id="auth-error-msg" class="auth-error"></div>
+    </div>
+  </div>
+
+<!-- ================= 頂部導覽列 ================= -->
+  <nav class="db-nav">
+    <!-- 點擊左側回到資料庫本頁 (重設/重新整理) -->
+    <a href="files.html" class="db-nav-brand">
+      ⚙️ NTUMESA <span>考古題與筆記資料庫</span>
+    </a>
+
+    <div class="db-nav-user">
+      <!-- 新增：返回官網首頁按鈕 -->
+      <a href="index.html" class="home-link-btn">
+        🏠 回系學會首頁
+      </a>
+
+      <span id="user-display" class="user-badge"></span>
+      <button onclick="handleLogout()" class="logout-btn">登出</button>
+    </div>
+  </nav>
+
+  <!-- ================= 資料庫主體 ================= -->
+  <main class="database-main">
+    <div class="db-header">
+      <h1>考古題與筆記檢索</h1>
+      <p>點選檔案可直接前往 Google Drive 預覽或下載。支援依年級、類別與關鍵字過濾。</p>
+    </div>
+
+    <!-- 搜尋與篩選列 -->
+    <div class="db-filter-bar">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="db-search-input" placeholder="搜尋課程名稱、教授、學期、筆記介紹..." oninput="handleFilter()">
       </div>
 
-      <div id="upload-status" style="margin-top: 1rem; font-weight: 600; font-size: 0.9rem;"></div>
+      <div class="filter-select-wrap">
+        <select id="grade-filter" onchange="handleFilter()">
+          <option value="ALL">所有年級 / 課程類型</option>
+          <option value="大一必修">大一必修</option>
+          <option value="大二必修">大二必修</option>
+          <option value="大三必修">大三必修</option>
+          <option value="選修/研究所">選修 / 研究所</option>
+        </select>
+      </div>
+
+      <div class="filter-select-wrap">
+        <select id="category-filter" onchange="handleFilter()">
+          <option value="ALL">所有資源類別</option>
+          <option value="考古題">考古題 (含詳解)</option>
+          <option value="課堂筆記">課堂筆記</option>
+          <option value="實驗/報告">實驗 / 報告</option>
+          <option value="其他">其他資源</option>
+        </select>
+      </div>
     </div>
 
-    <!-- 檔案下載列表 (自 Google Sheets CSV 動態讀取) -->
-    <h2 style="font-size: 1.4rem; margin-bottom: 1rem; color: var(--primary-color);">📂 可供下載資源列表</h2>
-    
-    <div id="files-loading" style="text-align: center; padding: 2rem; color: #64748b;">載入檔案清單中...</div>
+    <!-- 狀態資訊列 -->
+    <div class="db-status-bar">
+      <span id="result-count">正在連線至資料庫...</span>
+      <span>💡 資料即時同步自 Google Sheets</span>
+    </div>
 
-    <table class="data-table" id="files-table" style="display: none;">
-      <thead>
-        <tr>
-          <th>檔案名稱</th>
-          <th>分類</th>
-          <th>上傳日期</th>
-          <th>下載</th>
-        </tr>
-      </thead>
-      <tbody id="files-tbody"></tbody>
-    </table>
+    <!-- 檔案卡片清單網格 -->
+    <div id="file-grid" class="file-grid"></div>
   </main>
 
-  <footer>
-    <p>&copy; 2026 國立臺灣大學機械工程學系學生會 NTUMESA. All Rights Reserved.</p>
-  </footer>
-
-  <script src="config.js"></script>
+  <!-- ================= 業務與驗證邏輯腳本 ================= -->
   <script>
-    /**
-     * 1. 載入下載檔案清單（讀取 Google Sheet Files CSV）
-     */
-    function loadFiles() {
-      const loadingEl = document.getElementById("files-loading");
-      const tableEl = document.getElementById("files-table");
-      const tbody = document.getElementById("files-tbody");
+    /* ========================================================
+       1. 系統設定
+       ======================================================== */
+    const CONFIG = {
+      googleClientId: "360814271969-83l6mh0iiqhmrol0jtopl45qiiqpplqq.apps.googleusercontent.com",
+      filesCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTx0GJyuaRNXxtHNiN750VXs5IOkjA1hdOKsEEPVB7UluLglOm_F-vsix4cMoej9egFkAAdkLQfuVTS/pub?gid=1397357920&single=true&output=csv",
+      allowedUsersCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTx0GJyuaRNXxtHNiN750VXs5IOkjA1hdOKsEEPVB7UluLglOm_F-vsix4cMoej9egFkAAdkLQfuVTS/pub?gid=2076495599&single=true&output=csv",
+      allowedDomain: "@g.ntu.edu.tw",
+      allowedEmails: [
+        "b12502001@g.ntu.edu.tw",
+        "b12502002@g.ntu.edu.tw"
+      ]
+    };
 
-      Papa.parse(CSV_CONFIG.filesUrl, {
+    let allFiles = [];
+
+    /* ========================================================
+       2. Google 登入驗證與權限檢查
+       ======================================================== */
+    function parseJwt(token) {
+      try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(c => {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        return JSON.parse(jsonPayload);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    // 智慧解析白名單：加入時間戳防快取，並支援各種欄位別名與打勾狀態
+    function fetchRemoteWhitelist(url) {
+      return new Promise((resolve) => {
+        const freshUrl = url + (url.includes('?') ? '&' : '?') + '_t=' + new Date().getTime();
+
+        Papa.parse(freshUrl, {
+          download: true,
+          header: true,
+          skipEmptyLines: true,
+          complete: function(results) {
+            const activeUsers = [];
+            const suspendedUsers = [];
+
+            results.data.forEach(row => {
+              let rawId = "";
+              for (let key in row) {
+                const k = key.toLowerCase().trim();
+                if (k.includes("student_id") || k.includes("學號") || k.includes("email") || k.includes("信箱")) {
+                  if (row[key] && row[key].trim() !== "") {
+                    rawId = row[key].trim();
+                    break;
+                  }
+                }
+              }
+
+              if (!rawId) {
+                rawId = (row["student_id"] || row["email"] || Object.values(row)[1] || Object.values(row)[0] || "").trim();
+              }
+
+              if (!rawId) return;
+
+              const cleanId = rawId.toLowerCase()
+                .replace("@g.ntu.edu.tw", "")
+                .replace("@ntu.edu.tw", "")
+                .trim();
+
+              const fullEmailG = `${cleanId}@g.ntu.edu.tw`;
+              const fullEmailNtu = `${cleanId}@ntu.edu.tw`;
+
+              let rawStatus = "";
+              for (let key in row) {
+                const k = key.toLowerCase().trim();
+                if (k.includes("status") || k.includes("狀態") || k.includes("可用")) {
+                  rawStatus = String(row[key] || "").toLowerCase().trim();
+                  break;
+                }
+              }
+
+              const isEnabled = (
+                rawStatus === "true" || 
+                rawStatus === "可用" || 
+                rawStatus === "啟用" || 
+                rawStatus === "yes" || 
+                rawStatus === "1"
+              );
+
+              if (isEnabled) {
+                activeUsers.push(cleanId, fullEmailG, fullEmailNtu);
+              } else {
+                suspendedUsers.push(cleanId, fullEmailG, fullEmailNtu);
+              }
+            });
+
+            resolve({ activeUsers, suspendedUsers });
+          },
+          error: function(err) {
+            console.error("讀取白名單失敗:", err);
+            resolve({ activeUsers: [], suspendedUsers: [] });
+          }
+        });
+      });
+    }
+
+    // 核心身分與權限驗證 (唯一且完整版本)
+    async function verifyUserPermission(userEmail) {
+      const errEl = document.getElementById("auth-error-msg");
+      errEl.style.display = "none";
+
+      const isNtuEmail = userEmail.endsWith("@g.ntu.edu.tw") || userEmail.endsWith("@ntu.edu.tw");
+      if (!isNtuEmail) {
+        errEl.style.display = "block";
+        errEl.innerHTML = `⚠️ 存取失敗：<strong>${userEmail}</strong> 不是台大信箱。<br>請切換至台大學生帳號後重新登入。`;
+        return false;
+      }
+
+      const studentId = userEmail.replace("@g.ntu.edu.tw", "").replace("@ntu.edu.tw", "").trim();
+
+      const localAllowed = CONFIG.allowedEmails.map(e => e.toLowerCase().replace("@g.ntu.edu.tw", "").replace("@ntu.edu.tw", "").trim());
+      if (localAllowed.includes(studentId)) {
+        return true;
+      }
+
+      if (CONFIG.allowedUsersCsvUrl && CONFIG.allowedUsersCsvUrl.trim() !== "") {
+        try {
+          const { activeUsers, suspendedUsers } = await fetchRemoteWhitelist(CONFIG.allowedUsersCsvUrl);
+
+          if (activeUsers.includes(studentId) || activeUsers.includes(userEmail)) {
+            return true;
+          }
+
+          if (suspendedUsers.includes(studentId) || suspendedUsers.includes(userEmail)) {
+            errEl.style.display = "block";
+            errEl.innerHTML = `⚠️ 權限暫停：學號 <strong>${studentId}</strong> 的存取權限目前處於停用狀態。<br>如有疑問請聯絡系學會管理員。`;
+            return false;
+          }
+        } catch (e) {
+          console.warn("白名單檢查連線異常", e);
+        }
+      }
+
+      errEl.style.display = "block";
+      errEl.innerHTML = `⚠️ 存取被拒：學號 <strong>${studentId}</strong> 未在授權名單中。<br>如需開通請洽系學會學術部或管理員。`;
+      return false;
+    }
+
+    async function handleCredentialResponse(response) {
+      const user = parseJwt(response.credential);
+      if (!user || !user.email) return;
+
+      const email = user.email.toLowerCase().trim();
+      const allowed = await verifyUserPermission(email);
+
+      if (allowed) {
+        sessionStorage.setItem("ntumesa_auth_user", JSON.stringify({
+          name: user.name,
+          email: user.email,
+          picture: user.picture
+        }));
+        unlockDatabase(user);
+      }
+    }
+
+function unlockDatabase(userData) {
+  // 1. 隱藏登入遮罩
+  document.getElementById("auth-overlay").style.display = "none";
+  
+  // 2. 顯示右上角使用者身分
+  document.getElementById("user-display").innerHTML = `👤 <strong>${userData.name || ''}</strong> (${userData.email})`;
+  
+  // 3. 【關鍵】登入解鎖後，自動立刻抓取試算表並顯示檔案！
+  loadFilesFromSheet();
+}
+
+    function handleLogout() {
+      sessionStorage.removeItem("ntumesa_auth_user");
+      localStorage.removeItem("ntumesa_db_cache");
+      window.location.reload();
+    }
+
+    /* ========================================================
+       3. Google Sheets 考古題與筆記讀取 (加強防快取與欄位容錯)
+       ======================================================== */
+    function loadFilesFromSheet() {
+      const countEl = document.getElementById("result-count");
+      countEl.textContent = "載入檔案中...";
+
+      // 加上時間戳破除 Google Sheets 發布快取
+      const freshCsvUrl = CONFIG.filesCsvUrl + (CONFIG.filesCsvUrl.includes('?') ? '&' : '?') + '_t=' + new Date().getTime();
+
+      Papa.parse(freshCsvUrl, {
         download: true,
         header: true,
         skipEmptyLines: true,
         complete: function(results) {
-          loadingEl.style.display = "none";
-          tableEl.style.display = "table";
-          tbody.innerHTML = "";
+          // 容錯解析：相容 courseName、課程名稱 等不同打法
+          allFiles = results.data.map(row => {
+            const getVal = (possibleKeys) => {
+              for (let key in row) {
+                const cleanKey = key.trim().toLowerCase();
+                for (let pk of possibleKeys) {
+                  if (cleanKey === pk.toLowerCase() || cleanKey.includes(pk.toLowerCase())) {
+                    return row[key] ? row[key].trim() : "";
+                  }
+                }
+              }
+              return "";
+            };
 
-          const files = results.data;
-          if (!files || files.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #64748b; padding: 2rem;">目前尚無可下載的檔案。</td></tr>`;
-            return;
-          }
+            return {
+              courseName: getVal(["courseName", "課程名稱", "課程"]),
+              category: getVal(["category", "類型", "分類"]),
+              grade: getVal(["grade", "建議年級", "年級"]),
+              instructor: getVal(["instructor", "授課教授", "教授", "老師"]),
+              semester: getVal(["semester", "學期", "年份"]),
+              description: getVal(["description", "備註", "說明", "內容說明"]),
+              fileUrl: getVal(["fileUrl", "下載或預覽連結", "連結", "url"]),
+              uploader: getVal(["uploader", "提供者"])
+            };
+          }).filter(item => item.courseName && item.courseName !== "");
 
-          files.forEach(file => {
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-              <td style="font-weight: 600;">${file.fileName || '未命名檔案'}</td>
-              <td><span class="badge">${file.category || '系會資源'}</span></td>
-              <td style="color: var(--text-secondary); font-size: 0.85rem;">${file.uploadDate || '-'}</td>
-              <td><a href="${file.downloadUrl}" target="_blank" class="btn" style="padding: 0.3rem 0.8rem; font-size: 0.85rem;">下載</a></td>
-            `;
-            tbody.appendChild(tr);
-          });
+          handleFilter();
         },
         error: function(err) {
-          console.error("載入失敗:", err);
-          loadingEl.innerHTML = "<p style='color: #ef4444;'>無法讀取檔案列表，請確認已將 Files 工作表發布為 CSV。</p>";
+          console.error("載入失敗", err);
+          countEl.textContent = "無法連線至 Google Sheets，請確認網路或試算表發布設定。";
         }
       });
     }
 
-    /**
-     * 2. 處理檔案上傳（轉 Base64 POST 給 Apps Script）
-     */
-    const fileInput = document.getElementById("file-input");
-    const statusEl = document.getElementById("upload-status");
-    const dropZone = document.getElementById("drop-zone");
+    /* ========================================================
+       4. 即時搜尋與篩選邏輯
+       ======================================================== */
+    function handleFilter() {
+      const keyword = document.getElementById("db-search-input").value.trim().toLowerCase();
+      const selectedGrade = document.getElementById("grade-filter").value;
+      const selectedCategory = document.getElementById("category-filter").value;
 
-    // 點擊選檔監聽
-    fileInput.addEventListener("change", (e) => {
-      if (e.target.files.length > 0) uploadFile(e.target.files[0]);
-    });
+      const filtered = allFiles.filter(item => {
+        const matchKeyword = !keyword || [
+          item.courseName,
+          item.instructor,
+          item.semester,
+          item.description,
+          item.category
+        ].some(val => val && val.toLowerCase().includes(keyword));
 
-    // 拖曳上傳監聽
-    dropZone.addEventListener("dragover", (e) => {
-      e.preventDefault();
-      dropZone.style.borderColor = "var(--primary-color)";
-      dropZone.style.backgroundColor = "#f0f7ff";
-    });
-    dropZone.addEventListener("dragleave", () => {
-      dropZone.style.borderColor = "#94a3b8";
-      dropZone.style.backgroundColor = "var(--card-bg)";
-    });
-    dropZone.addEventListener("drop", (e) => {
-      e.preventDefault();
-      dropZone.style.borderColor = "#94a3b8";
-      dropZone.style.backgroundColor = "var(--card-bg)";
-      if (e.dataTransfer.files.length > 0) uploadFile(e.dataTransfer.files[0]);
-    });
+        const matchGrade = (selectedGrade === "ALL") || (item.grade === selectedGrade);
+        const matchCategory = (selectedCategory === "ALL") || (item.category && item.category.includes(selectedCategory));
 
-    function uploadFile(file) {
-      statusEl.style.color = "#0284c7";
-      statusEl.innerHTML = `⏳ 正在上傳「${file.name}」至雲端硬碟，請稍候...`;
+        return matchKeyword && matchGrade && matchCategory;
+      });
 
-      // 檢查是否設定了 Apps Script 網址
-      const targetApiUrl = (typeof API_URL !== "undefined") ? API_URL : (typeof CSV_CONFIG !== "undefined" && CSV_CONFIG.uploadApiUrl ? CSV_CONFIG.uploadApiUrl : "");
-      
-      if (!targetApiUrl) {
-        statusEl.style.color = "#ef4444";
-        statusEl.innerHTML = `⚠️ 請先在 config.js 中設定上傳用的 Apps Script API_URL。`;
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = async function(e) {
-        try {
-          const base64Content = e.target.result.split(',')[1];
-          const payload = {
-            fileName: file.name,
-            mimeType: file.type || "application/octet-stream",
-            fileData: base64Content,
-            category: "系會資源"
-          };
-
-          const res = await fetch(targetApiUrl, {
-            method: "POST",
-            body: JSON.stringify(payload)
-          });
-          const json = await res.json();
-
-          if (json.status === "success") {
-            statusEl.style.color = "#16a34a";
-            statusEl.innerHTML = `✅「${file.name}」已成功上傳！`;
-            fileInput.value = "";
-            setTimeout(loadFiles, 2000); // 稍候自動重新整理表格
-          } else {
-            throw new Error(json.message);
-          }
-        } catch (err) {
-          console.error("上傳失敗:", err);
-          statusEl.style.color = "#ef4444";
-          statusEl.innerHTML = `❌ 上傳發生錯誤: ${err.message}`;
-        }
-      };
-      reader.readAsDataURL(file);
+      renderFiles(filtered);
     }
 
-    document.addEventListener("DOMContentLoaded", loadFiles);
+function renderFiles(files) {
+  const container = document.getElementById("file-grid");
+  const countEl = document.getElementById("result-count");
+
+  countEl.textContent = `共找到 ${files.length} 項資源`;
+  container.innerHTML = "";
+
+  if (files.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; padding: 4rem 1rem; color: #64748b; background: #fff; border-radius: 14px; border: 1px solid var(--border-color);">
+        <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📂</div>
+        <p style="font-size: 1.05rem; font-weight: 600; margin-bottom: 0.3rem;">找不到符合條件的考古題或筆記</p>
+        <p style="font-size: 0.88rem;">請嘗試使用其他關鍵字或重設篩選條件。</p>
+      </div>
+    `;
+    return;
+  }
+
+  const listWrap = document.createElement("div");
+  listWrap.className = "file-list-container";
+
+  listWrap.innerHTML = `
+    <div class="file-list-header">
+      <div>課程名稱</div>
+      <div>類別 / 年級</div>
+      <div>授課教授</div>
+      <div>學期</div>
+      <div>內容備註</div>
+      <div style="text-align: right;">操作</div>
+    </div>
+  `;
+
+  files.forEach(file => {
+    const row = document.createElement("div");
+    row.className = "file-row";
+
+    const isExam = file.category && file.category.includes("考古");
+    const catBadgeClass = isExam ? "exam" : "notes";
+
+    row.innerHTML = `
+      <div class="file-col-course">${file.courseName}</div>
+      <div class="file-col-tags">
+        <span class="badge-tag ${catBadgeClass}">${file.category || '資源'}</span>
+        <span class="badge-tag grade">${file.grade || '必修'}</span>
+      </div>
+      <div>👨‍🏫 ${file.instructor || '-'}</div>
+      <div>📅 ${file.semester || '-'}</div>
+      <div class="file-col-desc" title="${file.description || ''}">${file.description || '無詳細說明'}</div>
+      <div class="file-col-action">
+        <a href="${file.fileUrl || '#'}" target="_blank" class="file-download-btn-sm">
+          開啟檔案 ↗
+        </a>
+      </div>
+    `;
+    listWrap.appendChild(row);
+  });
+
+  container.appendChild(listWrap);
+}
+/* ========================================================
+   6. 頁面載入初始化：即時權限重新查核與自動載入
+   ======================================================== */
+window.addEventListener("DOMContentLoaded", async () => {
+  const savedUser = sessionStorage.getItem("ntumesa_auth_user");
+  
+  if (savedUser) {
+    try {
+      const parsed = JSON.parse(savedUser);
+      if (parsed && parsed.email) {
+        // 背景向試算表再次核對白名單狀態
+        const stillAllowed = await verifyUserPermission(parsed.email.toLowerCase().trim());
+        if (stillAllowed) {
+          // ✅ 驗證通過，自動解鎖並自動載入檔案卡片
+          unlockDatabase(parsed);
+          return;
+        } else {
+          sessionStorage.removeItem("ntumesa_auth_user");
+          document.getElementById("auth-overlay").style.display = "flex";
+        }
+      }
+    } catch (e) {
+      sessionStorage.removeItem("ntumesa_auth_user");
+    }
+  }
+
+  // 若未登入，初始化 Google 登入按鈕
+  const checkGsiInterval = setInterval(() => {
+    if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+      clearInterval(checkGsiInterval);
+      google.accounts.id.initialize({
+        client_id: CONFIG.googleClientId,
+        callback: handleCredentialResponse
+      });
+
+      google.accounts.id.renderButton(
+        document.getElementById("google-signin-btn"),
+        { 
+          theme: "filled_blue", 
+          size: "large", 
+          shape: "pill",
+          text: "signin_with",
+          width: 250
+        }
+      );
+    }
+  }, 100);
+});
   </script>
 </body>
 </html>
