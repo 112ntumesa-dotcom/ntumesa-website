@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>系隊介紹 | 臺大機械系系學會 NTUMESA</title>
+  <meta name="description" content="探索臺大機械系豐富多元的系隊活動，包含系籃、系排、系羽、系足等運動隊伍介紹與加入方式。">
+  
+  <link rel="stylesheet" href="style.css">
+  <!-- PapaParse 解析 CSV -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+  <style>
+    :root {
+      --primary: #0284c7;
+      --primary-hover: #0369a1;
+      --bg-light: #f8fafc;
+      --text-dark: #0f172a;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans TC", sans-serif;
+      background-color: var(--bg-light);
+      color: var(--text-dark);
+      min-height: 100vh;
+    }
+
+    /* 頂部導覽列 */
+    .db-nav {
+      background: #ffffff;
+      border-bottom: 1px solid var(--border-color);
+      padding: 0.9rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .db-nav-brand {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--primary);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .home-link-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: #f1f5f9;
+      color: #334155;
+      border: 1px solid var(--border-color);
+      padding: 0.4rem 0.85rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .home-link-btn:hover {
+      background: #e2e8f0;
+      color: var(--primary);
+    }
+
+    /* 頁面主要容器 */
+    .teams-main {
+      max-width: 1160px;
+      margin: 2.5rem auto 4rem auto;
+      padding: 0 1.5rem;
+    }
+
+    .teams-header {
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+
+    .teams-header h1 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      margin: 0 0 0.5rem 0;
+    }
+
+    .teams-header p {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      margin: 0;
+    }
+
+    /* 九宮格網格 (自適應欄位) */
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+
+    /* 卡片設計 */
+    .team-card {
+      background: #ffffff;
+      border-radius: 16px;
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .team-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.1);
+    }
+
+    .team-card-cover {
+      width: 100%;
+      height: 180px;
+      background-color: #e2e8f0;
+      object-fit: cover;
+    }
+
+    .team-card-content {
+      padding: 1.25rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .team-card-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      margin: 0 0 0.4rem 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .team-badge {
+      font-size: 0.75rem;
+      background: #e0f2fe;
+      color: var(--primary);
+      padding: 0.2rem 0.5rem;
+      border-radius: 6px;
+      font-weight: 600;
+    }
+
+    .team-card-desc {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      line-height: 1.5;
+      margin-bottom: 1rem;
+      flex: 1;
+    }
+
+    .team-card-footer {
+      font-size: 0.85rem;
+      color: var(--primary);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    /* 近滿版彈出 Modal 遮罩 */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 1.5rem;
+      box-sizing: border-box;
+    }
+
+    /* 近滿版視窗本體 (寬度90%、最大高度90vh) */
+    .modal-sheet {
+      background: #ffffff;
+      width: 100%;
+      max-width: 900px;
+      max-height: 90vh;
+      border-radius: 20px;
+      overflow-y: auto;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      animation: modalFadeIn 0.25s ease-out;
+    }
+
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .modal-close-btn {
+      position: absolute;
+      top: 1rem;
+      right: 1.25rem;
+      background: rgba(255, 255, 255, 0.85);
+      border: 1px solid var(--border-color);
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      transition: background 0.2s;
+    }
+
+    .modal-close-btn:hover {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+
+    /* Modal 內部圖文排版 */
+    .modal-banner {
+      width: 100%;
+      max-height: 360px;
+      object-fit: cover;
+      background: #f1f5f9;
+    }
+
+    .modal-body {
+      padding: 2rem;
+    }
+
+    .modal-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      background: #f8fafc;
+      padding: 1.2rem;
+      border-radius: 12px;
+      margin: 1.2rem 0 1.8rem 0;
+      border: 1px solid var(--border-color);
+    }
+
+    .modal-meta-item strong {
+      display: block;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-bottom: 0.2rem;
+    }
+
+    .modal-desc-content {
+      font-size: 1rem;
+      line-height: 1.8;
+      color: #334155;
+      white-space: pre-line;
+      margin-bottom: 2rem;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .action-join-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--primary);
+      color: #ffffff;
+      padding: 0.8rem 1.6rem;
+      border-radius: 10px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+
+    .action-join-btn:hover {
+      background: var(--primary-hover);
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="db-nav">
+    <a href="teams.html" class="db-nav-brand">
+      🏆 NTUMESA <span>系隊介紹</span>
+    </a>
+    <a href="index.html" class="home-link-btn">
+      🏠 回系學會首頁
+    </a>
+  </nav>
+
+  <main class="teams-main">
+    <div class="teams-header">
+      <h1>系隊與活動社群</h1>
+      <p>點選各系隊卡片即可查看練球時間、隊伍簡介及加入連結！</p>
+    </div>
+
+    <!-- 九宮格卡片掛載區 -->
+    <div id="team-grid" class="team-grid">
+      <div style="text-align: center; grid-column: 1/-1; color: var(--text-muted); padding: 3rem;">
+        正在載入系隊資料...
+      </div>
+    </div>
+  </main>
+
+  <!-- 詳細資訊彈出 Modal (近滿版視窗) -->
+  <div id="team-modal-overlay" class="modal-overlay" onclick="handleOverlayClick(event)">
+    <div class="modal-sheet">
+      <button class="modal-close-btn" onclick="closeTeamModal()">✕</button>
+      
+      <!-- 隊伍照片 -->
+      <img id="m-image" class="modal-banner" src="" alt="隊伍代表照片">
+
+      <div class="modal-body">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 0.8rem;">
+          <h2 id="m-name" style="font-size: 1.8rem; margin: 0;"></h2>
+          <span id="m-category" class="team-badge"></span>
+        </div>
+<!-- 隊長簡潔資訊條 -->
+        <div class="modal-meta-grid" style="grid-template-columns: 1fr; margin: 0.5rem 0 1.5rem 0; padding: 0.8rem 1.2rem;">
+          <div class="modal-meta-item">
+            <strong>現任隊長 / 聯絡人</strong>
+            <span id="m-captain" style="font-weight: 600; font-size: 1rem; color: #1e293b;">-</span>
+          </div>
+        </div>
+
+        <!-- 詳細介紹與練習時間（直接由 fullDesc 換行呈現） -->
+        <div id="m-desc" class="modal-desc-content" style="margin-bottom: 1.8rem;"></div>
+
+<!-- ✅ 乾淨的單一按鈕容器 -->
+<div class="modal-actions" style="margin-top: 1.5rem;">
+  <a id="m-action-btn" href="#" target="_blank" class="action-join-btn" style="width: 100%; justify-content: center; box-sizing: border-box; text-decoration: none;">
+    🔗 <span id="m-action-text">前往追蹤專頁 / 聯絡我們</span>
+  </a>
+</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 替換為你的 Google Sheets 發布 CSV 網址 (指定 gid 為 Teams 工作表)
+    const TEAMS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTx0GJyuaRNXxtHNiN750VXs5IOkjA1hdOKsEEPVB7UluLglOm_F-vsix4cMoej9egFkAAdkLQfuVTS/pub?gid=1064597982&single=true&output=csv";
+
+    let teamsList = [];
+
+    // 載入試算表資料 (加時間戳避免快取)
+    function loadTeamsFromSheet() {
+      const freshUrl = TEAMS_CSV_URL + (TEAMS_CSV_URL.includes('?') ? '&' : '?') + '_t=' + new Date().getTime();
+
+      Papa.parse(freshUrl, {
+        download: true,
+        header: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+          teamsList = results.data.filter(row => row.name && row.name.trim() !== "");
+          renderTeamGrid(teamsList);
+        },
+        error: function(err) {
+          console.error("載入系隊資料失敗:", err);
+          document.getElementById("team-grid").innerHTML = `
+            <div style="text-align: center; grid-column: 1/-1; color: #dc2626;">
+              無法讀取系隊資料，請確認試算表發布設定。
+            </div>
+          `;
+        }
+      });
+    }
+
+    // 渲染九宮格卡片
+    function renderTeamGrid(teams) {
+      const container = document.getElementById("team-grid");
+      container.innerHTML = "";
+
+      if (teams.length === 0) {
+        container.innerHTML = `<div style="text-align:center; grid-column:1/-1;">目前暫無系隊資料。</div>`;
+        return;
+      }
+
+      teams.forEach((t, index) => {
+        const card = document.createElement("div");
+        card.className = "team-card";
+        card.onclick = () => openTeamModal(index);
+
+        // 預設佔位圖
+        const displayImg = formatDriveImageUrl(t.imageUrl);
+
+        card.innerHTML = `
+          <img src="${displayImg}" class="team-card-cover" alt="${t.name}">
+          <div class="team-card-content">
+            <div class="team-card-title">
+              <span>${t.name}</span>
+              <span class="team-badge">${t.category || '系隊'}</span>
+            </div>
+            <div class="team-card-desc">${t.shortDesc || '點擊查看更多隊伍資訊與社群加入方式。'}</div>
+            <div class="team-card-footer">了解更多 ➔</div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+function openTeamModal(index) {
+      const t = teamsList[index];
+      if (!t) return;
+
+      document.getElementById("m-name").textContent = t.name;
+      document.getElementById("m-category").textContent = t.category || "運動系隊";
+      document.getElementById("m-captain").textContent = t.captain || "洽系學會學術/體育部";
+      document.getElementById("m-desc").textContent = t.fullDesc || t.shortDesc || "暫無詳細說明。";
+
+      // 圖片載入 (自動轉 Google Drive 直連)
+      const imgEl = document.getElementById("m-image");
+      if (t.imageUrl && t.imageUrl.trim() !== "") {
+        imgEl.src = formatDriveImageUrl(t.imageUrl);
+        imgEl.style.display = "block";
+      } else {
+        imgEl.style.display = "none";
+      }
+
+      // 整合按鈕邏輯：自動結合 contact 與 link
+      const actionBtn = document.getElementById("m-action-btn");
+      const actionText = document.getElementById("m-action-text");
+      const contactVal = (t.contact || "").trim();
+      const targetUrl = (t.link || "").trim();
+
+      // 如果有填寫網址，按鈕才顯示
+      if (targetUrl !== "") {
+        actionBtn.style.display = "inline-flex";
+        actionBtn.href = targetUrl;
+        
+        // 如果有填 contact（如 FB、IG、LINE），動態帶入文字；沒有就顯示預設
+        if (contactVal !== "") {
+          actionText.textContent = `前往 ${contactVal} / 聯絡我們`;
+        } else {
+          actionText.textContent = "前往官方專頁 / 聯絡我們";
+        }
+      } else {
+        actionBtn.style.display = "none";
+      }
+
+      // 【補上這兩行，視窗才會彈出！】
+      document.getElementById("team-modal-overlay").style.display = "flex";
+      document.body.style.overflow = "hidden";
+}
+    // 關閉 Modal
+    function closeTeamModal() {
+      document.getElementById("team-modal-overlay").style.display = "none";
+      document.body.style.overflow = "auto";
+    }
+
+    // 點擊背景關閉
+    function handleOverlayClick(e) {
+      if (e.target.id === "team-modal-overlay") {
+        closeTeamModal();
+      }
+    }
+
+    // 頁面載入自動讀取
+    window.addEventListener("DOMContentLoaded", loadTeamsFromSheet);
+
+
+    // 自動將各種 Google Drive 連結轉換為可直接顯示的圖片直連
+    function formatDriveImageUrl(url) {
+      if (!url) return "https://via.placeholder.com/600x350?text=NTUME+Sports+Team";
+      
+      const cleanUrl = url.trim();
+      
+      // 判斷是否為 Google Drive 連結
+      if (cleanUrl.includes("drive.google.com")) {
+        // 抓取 /file/d/ 後方或 id= 後方的檔案 ID
+        const match = cleanUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || cleanUrl.match(/id=([a-zA-Z0-9_-]+)/);
+        if (match && match[1]) {
+          const fileId = match[1];
+          // 轉換為 Google Drive 官方圖片直連縮圖端點 (高畫質 1000px 寬)
+          return `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
+        }
+      }
+      
+      return cleanUrl;
+    }
+
+  </script>
+</body>
+</html>
