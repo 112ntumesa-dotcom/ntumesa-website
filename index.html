@@ -7,16 +7,213 @@
   <!-- 搜尋結果標題 -->
   <title>臺大機械系系學會 NTUMESA | 國立臺灣大學機械工程學系學生會</title>
 
-  <!-- 搜尋結果摘要說明 (建議 120-150 字以內) -->
-  <meta name="description" content="國立臺灣大學機械工程學系學生會（NTUMESA）官方網站。提供系學會最新公告、活動資訊、系隊介紹、學術家產與考古題筆記資料庫檢索。">
+  <!-- 搜尋結果摘要說明 -->
+  <meta name="description" content="國立臺灣大學機械工程學系學生會（NTUMESA）官方網站。提供系學會最新公告、活動資訊、系隊介紹與學術家產資料庫檢索。">
 
-  <!-- Open Graph 標籤 (社群平台分享預覽) -->
+  <!-- Open Graph 標籤 -->
   <meta property="og:title" content="臺大機械系系學會 NTUMESA">
   <meta property="og:description" content="國立臺灣大學機械工程學系學生會官方網站。">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://www.ntumesa.com/">
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+  <style>
+    /* =========================================
+       活動彈出視窗與日曆手機版響應式優化
+       ========================================= */
+    .activity-card {
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .activity-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    /* 活動詳細彈窗 (近全螢幕 Modal) */
+    .activity-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding: 1.25rem;
+      box-sizing: border-box;
+    }
+    .activity-modal-sheet {
+      background: #ffffff;
+      width: 100%;
+      max-width: 820px;
+      max-height: 88vh;
+      border-radius: 20px;
+      overflow-y: auto;
+      position: relative;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
+      display: flex;
+      flex-direction: column;
+      animation: modalFadeIn 0.2s ease-out;
+    }
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .activity-modal-close {
+      position: absolute;
+      top: 1rem;
+      right: 1.2rem;
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid #e2e8f0;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+      transition: background 0.2s;
+    }
+    .activity-modal-close:hover {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+    .activity-modal-banner {
+      width: 100%;
+      max-height: 340px;
+      object-fit: cover;
+      background: #f1f5f9;
+    }
+    .activity-modal-body {
+      padding: 2rem;
+    }
+    .activity-modal-meta-bar {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      background: #f8fafc;
+      padding: 1rem 1.2rem;
+      border-radius: 12px;
+      margin: 1rem 0 1.5rem 0;
+      font-size: 0.92rem;
+      color: #475569;
+      border: 1px solid #e2e8f0;
+    }
+    .activity-modal-desc {
+      font-size: 1rem;
+      line-height: 1.85;
+      color: #334155;
+      white-space: pre-line;
+      margin-bottom: 2rem;
+    }
+    .activity-modal-action-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      background: #0284c7;
+      color: #ffffff;
+      padding: 0.85rem 1.6rem;
+      border-radius: 10px;
+      font-weight: 700;
+      text-decoration: none;
+      width: 100%;
+      box-sizing: border-box;
+      transition: background 0.2s;
+    }
+    .activity-modal-action-btn:hover {
+      background: #0369a1;
+    }
+
+ /* =========================================
+   日曆排版：固定欄寬與完全相同的上下間距
+   ========================================= */
+
+/* 外層水平滾動容器，確保在手機上滑動時不破版 */
+.calendar-responsive-grid-wrap {
+  width: 100% !important;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  box-sizing: border-box !important;
+}
+
+/* 核心容器：設定固定總寬度 (7格 x 95px + 6個間距 x 8px = 713px) */
+.cal-table-wrap {
+  width: 713px !important;
+  margin: 0 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;            /* 星期列與日期格子之間的垂直間隙 */
+  box-sizing: border-box !important;
+}
+
+/* 1. 星期列：每格固定 95px 寬，左右間隙固定 8px */
+.cal-weekdays {
+  display: grid !important;
+  grid-template-columns: repeat(7, 95px) !important;
+  gap: 8px !important;
+  width: 713px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  box-sizing: border-box !important;
+}
+
+.cal-weekday {
+  width: 95px !important;
+  height: 40px !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 0.95rem !important;
+  font-weight: 700 !important;
+  color: #475569 !important;
+  background: #f1f5f9 !important;
+  border-radius: 8px !important;
+  border: 1px solid #e2e8f0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* 2. 日期格子：每格固定 95px 寬，左右與上下間隙固定 8px */
+.cal-days-grid {
+  display: grid !important;
+  grid-template-columns: repeat(7, 95px) !important;
+  gap: 8px !important;
+  width: 713px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  box-sizing: border-box !important;
+}
+
+.cal-day-cell {
+  width: 95px !important;
+  min-height: 95px !important;
+  box-sizing: border-box !important;
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 8px !important;
+  padding: 6px !important;
+  margin: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+    @media (max-width: 768px) {
+      .activity-modal-body {
+        padding: 1.25rem;
+      }
+      .calendar-card-box {
+        padding: 1rem 0.75rem !important;
+      }
+    }
+  </style>
 </head>
 <body>
   <!-- ==========================================
@@ -24,25 +221,21 @@
        ========================================== -->
   <header>
     <div class="nav-wrap">
-      <!-- 左側 Logo 與標題 -->
       <a href="index.html" class="site-logo">
         <img src="images/logo.png" onerror="this.src='https://via.placeholder.com/40?text=ME'" alt="系會Logo">
         <span class="site-title">臺大機械系系學會</span>
       </a>
 
-      <!-- 右側導覽按鈕群 -->
       <div class="nav-right">
         <ul class="nav-links">
           <li><a href="gallery.html">活動相簿</a></li>
           <li><a href="files.html">歷屆資料庫</a></li>
         </ul>
 
-        <!-- 藍色藥丸膠囊按鈕 -->
         <a href="https://www.instagram.com/ntume_camp?utm_source=ig_web_button_share_sheet&igsi=ZDNlZDc0MzIxNw==" target="_blank" class="pill-btn">
           <span>⚙️</span> 台大機械營
         </a>
 
-        <!-- 漢堡選單按鈕 (觸發全部連結抽屜) -->
         <button class="hamburger-btn" id="open-drawer-btn" aria-label="打開選單">
           <span></span>
           <span></span>
@@ -55,186 +248,42 @@
   <!-- ==========================================
        2. 全螢幕輪播幻燈片 (Hero Slider)
        ========================================== -->
-<section class="slider-container" id="hero-slider">
-  <!-- 投影片 1 -->
-  <div class="slide active">
-    <!-- 換成新檔名或直接貼上圖片 URL -->
-    <img class="slide-img" src="images/1.webp" alt="機械迎新宿營">
-    <!-- 若有文字遮罩，可在這裡修改文字 -->
-    <div class="slide-overlay">
-      <div class="slide-overlay-content">
-        <h2 class="slide-title">2026 機械系迎新宿營</h2>
-        <p class="slide-desc">歡迎大一新鮮人加入機械大家庭！</p>
+  <section class="slider-container" id="hero-slider">
+    <div class="slide active">
+      <img class="slide-img" src="images/1.webp" alt="機械迎新宿營">
+      <div class="slide-overlay">
+        <div class="slide-overlay-content">
+          <h2 class="slide-title">2026 機械系迎新宿營</h2>
+          <p class="slide-desc">歡迎大一新鮮人加入機械大家庭！</p>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- 投影片 2 -->
-  <div class="slide">
-    <img class="slide-img" src="images/2.webp" alt="實作工作坊">
-    <div class="slide-overlay">
-      <div class="slide-overlay-content">
-        <h2 class="slide-title">實作工作坊 & 企業參訪</h2>
-        <p class="slide-desc">結合理論與工程實務，探索未來製造。</p>
-      </div>
+    <div class="slide"><img class="slide-img" src="images/2.webp" alt="實作工作坊"><div class="slide-overlay"><div class="slide-overlay-content"><h2 class="slide-title">實作工作坊 & 企業參訪</h2><p class="slide-desc">結合理論與工程實務，探索未來製造。</p></div></div></div>
+    <div class="slide"><img class="slide-img" src="images/3.webp" alt="實作工作坊"><div class="slide-overlay"><div class="slide-overlay-content"><h2 class="slide-title">實作工作坊 & 企業參訪</h2><p class="slide-desc">結合理論與工程實務，探索未來製造。</p></div></div></div>
+    <div class="slide"><img class="slide-img" src="images/4.webp" alt="實作工作坊"><div class="slide-overlay"><div class="slide-overlay-content"><h2 class="slide-title">實作工作坊 & 企業參訪</h2><p class="slide-desc">結合理論與工程實務，探索未來製造。</p></div></div></div>
+    <div class="slide"><img class="slide-img" src="images/5.webp" alt="實作工作坊"><div class="slide-overlay"><div class="slide-overlay-content"><h2 class="slide-title">實作工作坊 & 企業參訪</h2><p class="slide-desc">結合理論與工程實務，探索未來製造。</p></div></div></div>
+    <div class="slide"><img class="slide-img" src="images/6.webp" alt="實作工作坊"><div class="slide-overlay"><div class="slide-overlay-content"><h2 class="slide-title">實作工作坊 & 企業參訪</h2><p class="slide-desc">結合理論與工程實務，探索未來製造。</p></div></div></div>
+    <div class="slide"><img class="slide-img" src="images/7.webp" alt="實作工作坊"><div class="slide-overlay"><div class="slide-overlay-content"><h2 class="slide-title">實作工作坊 & 企業參訪</h2><p class="slide-desc">結合理論與工程實務，探索未來製造。</p></div></div></div>
+    <div class="slide"><img class="slide-img" src="images/8.webp" alt="實作工作坊"><div class="slide-overlay"><div class="slide-overlay-content"><h2 class="slide-title">實作工作坊 & 企業參訪</h2><p class="slide-desc">結合理論與工程實務，探索未來製造。</p></div></div></div>
+    <div class="slide"><img class="slide-img" src="images/9.webp" alt="實作工作坊"><div class="slide-overlay"><div class="slide-overlay-content"><h2 class="slide-title">實作工作坊 & 企業參訪</h2><p class="slide-desc">結合理論與工程實務，探索未來製造。</p></div></div></div>
+    <div class="slide"><img class="slide-img" src="images/10.webp" alt="實作工作坊"><div class="slide-overlay"><div class="slide-overlay-content"><h2 class="slide-title">實作工作坊 & 企業參訪</h2><p class="slide-desc">結合理論與工程實務，探索未來製造。</p></div></div></div>
+    <div class="slide"><img class="slide-img" src="images/11.webp" alt="實作工作坊"><div class="slide-overlay"><div class="slide-overlay-content"><h2 class="slide-title">實作工作坊 & 企業參訪</h2><p class="slide-desc">結合理論與工程實務，探索未來製造。</p></div></div></div>
+    <div class="slide"><img class="slide-img" src="images/12.webp" alt="實作工作坊"><div class="slide-overlay"><div class="slide-overlay-content"><h2 class="slide-title">實作工作坊 & 企業參訪</h2><p class="slide-desc">結合理論與工程實務，探索未來製造。</p></div></div></div>
+    <div class="slide"><img class="slide-img" src="images/13.webp" alt="實作工作坊"><div class="slide-overlay"><div class="slide-overlay-content"><h2 class="slide-title">實作工作坊 & 企業參訪</h2><p class="slide-desc">結合理論與工程實務，探索未來製造。</p></div></div></div>
+
+    <div class="scroll-indicator" onclick="document.getElementById('main-content').scrollIntoView({ behavior: 'smooth' });">
+      ⌄
     </div>
-  </div>
 
-    <!-- 投影片 3 -->
-  <div class="slide">
-    <img class="slide-img" src="images/3.webp" alt="實作工作坊">
-    <div class="slide-overlay">
-      <div class="slide-overlay-content">
-        <h2 class="slide-title">實作工作坊 & 企業參訪</h2>
-        <p class="slide-desc">結合理論與工程實務，探索未來製造。</p>
-      </div>
+    <div class="slider-dots" id="slider-dots">
+      <span class="dot active"></span><span class="dot"></span><span class="dot"></span>
+      <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <span class="dot"></span>
     </div>
-  </div>
-
-
-    <!-- 投影片 4 -->
-  <div class="slide">
-    <img class="slide-img" src="images/4.webp" alt="實作工作坊">
-    <div class="slide-overlay">
-      <div class="slide-overlay-content">
-        <h2 class="slide-title">實作工作坊 & 企業參訪</h2>
-        <p class="slide-desc">結合理論與工程實務，探索未來製造。</p>
-      </div>
-    </div>
-  </div>
-
-
-    <!-- 投影片 5 -->
-  <div class="slide">
-    <img class="slide-img" src="images/5.webp" alt="實作工作坊">
-    <div class="slide-overlay">
-      <div class="slide-overlay-content">
-        <h2 class="slide-title">實作工作坊 & 企業參訪</h2>
-        <p class="slide-desc">結合理論與工程實務，探索未來製造。</p>
-      </div>
-    </div>
-  </div>
-
-
-    <!-- 投影片 6 -->
-  <div class="slide">
-    <img class="slide-img" src="images/6.webp" alt="實作工作坊">
-    <div class="slide-overlay">
-      <div class="slide-overlay-content">
-        <h2 class="slide-title">實作工作坊 & 企業參訪</h2>
-        <p class="slide-desc">結合理論與工程實務，探索未來製造。</p>
-      </div>
-    </div>
-  </div>
-
-
-    <!-- 投影片 7 -->
-  <div class="slide">
-    <img class="slide-img" src="images/7.webp" alt="實作工作坊">
-    <div class="slide-overlay">
-      <div class="slide-overlay-content">
-        <h2 class="slide-title">實作工作坊 & 企業參訪</h2>
-        <p class="slide-desc">結合理論與工程實務，探索未來製造。</p>
-      </div>
-    </div>
-  </div>
-
-
-    <!-- 投影片 8 -->
-  <div class="slide">
-    <img class="slide-img" src="images/8.webp" alt="實作工作坊">
-    <div class="slide-overlay">
-      <div class="slide-overlay-content">
-        <h2 class="slide-title">實作工作坊 & 企業參訪</h2>
-        <p class="slide-desc">結合理論與工程實務，探索未來製造。</p>
-      </div>
-    </div>
-  </div>
-
-
-
-    <!-- 投影片 9 -->
-  <div class="slide">
-    <img class="slide-img" src="images/9.webp" alt="實作工作坊">
-    <div class="slide-overlay">
-      <div class="slide-overlay-content">
-        <h2 class="slide-title">實作工作坊 & 企業參訪</h2>
-        <p class="slide-desc">結合理論與工程實務，探索未來製造。</p>
-      </div>
-    </div>
-  </div>
-
-
-
-    <!-- 投影片 10 -->
-  <div class="slide">
-    <img class="slide-img" src="images/10.webp" alt="實作工作坊">
-    <div class="slide-overlay">
-      <div class="slide-overlay-content">
-        <h2 class="slide-title">實作工作坊 & 企業參訪</h2>
-        <p class="slide-desc">結合理論與工程實務，探索未來製造。</p>
-      </div>
-    </div>
-  </div>
-
-
-
-
-    <!-- 投影片 11 -->
-  <div class="slide">
-    <img class="slide-img" src="images/11.webp" alt="實作工作坊">
-    <div class="slide-overlay">
-      <div class="slide-overlay-content">
-        <h2 class="slide-title">實作工作坊 & 企業參訪</h2>
-        <p class="slide-desc">結合理論與工程實務，探索未來製造。</p>
-      </div>
-    </div>
-  </div>
-
-      <!-- 投影片 12 -->
-  <div class="slide">
-    <img class="slide-img" src="images/12.webp" alt="實作工作坊">
-    <div class="slide-overlay">
-      <div class="slide-overlay-content">
-        <h2 class="slide-title">實作工作坊 & 企業參訪</h2>
-        <p class="slide-desc">結合理論與工程實務，探索未來製造。</p>
-      </div>
-    </div>
-  </div>
-
-      <!-- 投影片 13 -->
-  <div class="slide">
-    <img class="slide-img" src="images/13.webp" alt="實作工作坊">
-    <div class="slide-overlay">
-      <div class="slide-overlay-content">
-        <h2 class="slide-title">實作工作坊 & 企業參訪</h2>
-        <p class="slide-desc">結合理論與工程實務，探索未來製造。</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- 向下滾動指示小箭頭 -->
-  <div class="scroll-indicator" onclick="document.getElementById('main-content').scrollIntoView({ behavior: 'smooth' });">
-    ⌄
-  </div>
-
-  <!-- 輪播圓點：有幾張投影片就放幾個 dot -->
-  <div class="slider-dots" id="slider-dots">
-    <span class="dot active"></span>
-    <span class="dot"></span>
-    <span class="dot"></span>
-    <span class="dot"></span>
-    <span class="dot"></span>
-    <span class="dot"></span>
-    <span class="dot"></span>
-    <span class="dot"></span>
-    <span class="dot"></span>
-    <span class="dot"></span>
-    <span class="dot"></span>
-    <span class="dot"></span>
-    <span class="dot"></span>
-  </div>
-</section>
+  </section>
 
   <!-- ==========================================
        3. 側邊抽屜選單 (Drawer Menu)
@@ -271,124 +320,138 @@
 
   <!-- 主要內容區塊 -->
   <main id="main-content">
-<section id="announcements" class="activities-section">
-  <div class="activities-header">
-    <div>
-      <h2 class="activities-title">📢 最新活動公告</h2>
-    </div>
-  </div>
+    <section id="announcements" class="activities-section">
+      <div class="activities-header">
+        <div>
+          <h2 class="activities-title">📢 最新活動公告</h2>
+        </div>
+      </div>
 
-  <!-- 載入提示 -->
-  <div id="announcement-loading" style="text-align: center; padding: 2rem; color: #64748b;">載入公告中...</div>
-  
-  <!-- 注意這個 id 必須是 activities-container -->
-  <div id="activities-container" class="activities-scroll-container" style="display: none;"></div>
-</section>
+      <div id="announcement-loading" style="text-align: center; padding: 2rem; color: #64748b;">載入公告中...</div>
+      <div id="activities-container" class="activities-scroll-container" style="display: none;"></div>
+    </section>
 
-<!-- ==========================================
-     活動日曆區塊 (Activity Calendar)
-     ========================================== -->
-<section id="calendar" class="calendar-section">
-  <div class="calendar-header">
-    <h2 class="calendar-title">活動日曆</h2>
-    <div class="calendar-subtitle">CALENDAR</div>
-  </div>
+    <!-- ==========================================
+         活動日曆區塊 (Activity Calendar)
+         ========================================== -->
+    <section id="calendar" class="calendar-section">
+      <div class="calendar-card-box">
+        <div class="calendar-header">
+          <h2 class="calendar-title">活動日曆</h2>
+          <div class="calendar-subtitle">CALENDAR</div>
+        </div>
 
-  <!-- 年月導航與切換箭頭 -->
-  <div class="calendar-nav-bar">
-    <button class="cal-nav-btn" id="cal-prev-month" aria-label="上個月">‹</button>
-    <div class="cal-month-display" id="cal-month-display">2026 年 9 月</div>
-    <button class="cal-nav-btn" id="cal-next-month" aria-label="下個月">›</button>
-  </div>
+        <!-- 月份導覽切換 -->
+        <div class="calendar-nav-bar">
+          <button class="cal-nav-btn" id="cal-prev-month" aria-label="上個月">‹</button>
+          <div class="cal-month-display" id="cal-month-display"></div>
+          <button class="cal-nav-btn" id="cal-next-month" aria-label="下個月">›</button>
+        </div>
 
-  <!-- 附圖樣式的星期列 (日 一 二 三 四 五 六) -->
-  <div class="cal-weekdays">
-    <div class="cal-weekday">日</div>
-    <div class="cal-weekday">一</div>
-    <div class="cal-weekday">二</div>
-    <div class="cal-weekday">三</div>
-    <div class="cal-weekday">四</div>
-    <div class="cal-weekday">五</div>
-    <div class="cal-weekday">六</div>
-  </div>
+        <!-- 核心表格包覆層 -->
+        <div class="calendar-responsive-grid-wrap">
+          <div class="cal-table-wrap">
+            <!-- 星期列 -->
+            <div class="cal-weekdays">
+              <div class="cal-weekday">日</div>
+              <div class="cal-weekday">一</div>
+              <div class="cal-weekday">二</div>
+              <div class="cal-weekday">三</div>
+              <div class="cal-weekday">四</div>
+              <div class="cal-weekday">五</div>
+              <div class="cal-weekday">六</div>
+            </div>
 
-  <!-- 日期方格容器 -->
-  <div class="cal-days-grid" id="cal-days-grid">
-    <!-- JS 會在此動態填入每月份的日期與跨天活動 -->
-  </div>
+            <!-- 日期格子 -->
+            <div class="cal-days-grid" id="cal-days-grid"></div>
+          </div>
+        </div>
 
-  <!-- 點選日期展開詳細活動卡片 -->
-  <div class="cal-details-card" id="cal-details-card">
-    <div class="cal-details-header">
-      <span>📅</span>
-      <span id="cal-details-date-title">點選日期查看活動</span>
-    </div>
-    <div class="cal-details-list" id="cal-details-list"></div>
-  </div>
-</section>
+        <div class="cal-details-card" id="cal-details-card" style="margin-top: 1.5rem;">
+          <div class="cal-details-header">
+            <span>📅</span>
+            <span id="cal-details-date-title">點選日期查看活動</span>
+          </div>
+          <div class="cal-details-list" id="cal-details-list"></div>
+        </div>
+      </div>
+    </section>
 
-<!-- ==========================================
-     考古題與家產資料庫導引橫幅
-     ========================================== -->
-<section class="db-banner-section">
-  <div class="db-banner-card">
-    <div class="db-banner-content">
-      <h2 class="db-banner-title">NTUME Database</h2>
-      <div class="db-banner-subtitle">考古題與筆記家產資料庫</div>
-      <a href="files.html" class="db-banner-btn">搜尋考古題及筆記</a>
-    </div>
-    
-<div class="db-banner-img-wrap">
-  <svg width="180" height="150" viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 15px 25px rgba(13, 59, 102, 0.2));">
-    <!-- 書本主體厚度與陰影 -->
-    <path d="M10 75C35 70 58 78 60 84C62 78 85 70 110 75V25C85 20 62 28 60 28C58 28 35 20 10 25V75Z" fill="#8d5b4c"/>
-    <path d="M12 73C36 68 58 76 60 81C62 76 84 68 108 73V23C84 18 62 26 60 26C58 26 36 18 12 23V73Z" fill="#f8fafc"/>
-    
-    <!-- 書脊中心線 -->
-    <path d="M60 26V81" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round"/>
-    
-    <!-- 左側書頁線條 -->
-    <path d="M22 34C34 32 46 36 52 38" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
-    <path d="M22 44C34 42 46 46 52 48" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
-    <path d="M22 54C34 52 46 56 52 58" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
-    
-    <!-- 右側書頁線條 -->
-    <path d="M68 38C74 36 86 32 98 34" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
-    <path d="M68 48C74 46 86 42 98 44" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
-    <path d="M68 58C74 56 86 52 98 54" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
-    
-    <!-- 書籤絲帶 -->
-    <path d="M60 28V62L64 58L68 62V28" fill="#0284c7"/>
-  </svg>
-</div>
-  </div>
-</section>
+    <!-- ==========================================
+         考古題與家產資料庫導引橫幅
+         ========================================== -->
+    <section class="db-banner-section">
+      <div class="db-banner-card">
+        <div class="db-banner-content">
+          <h2 class="db-banner-title">NTUME Database</h2>
+          <div class="db-banner-subtitle">考古題與筆記家產資料庫</div>
+          <a href="files.html" class="db-banner-btn">搜尋考古題及筆記</a>
+        </div>
+        
+        <div class="db-banner-img-wrap">
+          <svg width="180" height="150" viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 15px 25px rgba(13, 59, 102, 0.2));">
+            <path d="M10 75C35 70 58 78 60 84C62 78 85 70 110 75V25C85 20 62 28 60 28C58 28 35 20 10 25V75Z" fill="#8d5b4c"/>
+            <path d="M12 73C36 68 58 76 60 81C62 76 84 68 108 73V23C84 18 62 26 60 26C58 26 36 18 12 23V73Z" fill="#f8fafc"/>
+            <path d="M60 26V81" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round"/>
+            <path d="M22 34C34 32 46 36 52 38" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
+            <path d="M22 44C34 42 46 46 52 48" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
+            <path d="M22 54C34 52 46 56 52 58" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
+            <path d="M68 38C74 36 86 32 98 34" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
+            <path d="M68 48C74 46 86 42 98 44" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
+            <path d="M68 58C74 56 86 52 98 54" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
+            <path d="M60 28V62L64 58L68 62V28" fill="#0284c7"/>
+          </svg>
+        </div>
+      </div>
+    </section>
 
     <!-- 團隊介紹區塊 -->
-<section id="team" style="margin-bottom: 5rem;">
-  <div class="team-section-header">
-    <h2 class="team-title">團隊介紹</h2>
-    <div class="team-subtitle">TEAM</div>
-  </div>
+    <section id="team" style="margin-bottom: 5rem;">
+      <div class="team-section-header">
+        <h2 class="team-title">團隊介紹</h2>
+        <div class="team-subtitle">TEAM</div>
+      </div>
 
-  <div id="members-loading" style="text-align: center; padding: 2rem; color: #64748b;">載入團隊成員中...</div>
-  <div id="members-grid" class="members-grid" style="display: none;"></div>
-</section>
+      <div id="members-loading" style="text-align: center; padding: 2rem; color: #64748b;">載入團隊成員中...</div>
+      <div id="members-grid" class="members-grid" style="display: none;"></div>
+    </section>
 
-<!-- 成員詳細資料與聯絡方式彈窗 -->
-<div class="contact-modal-overlay" id="contact-modal">
-  <div class="contact-modal-card">
-    <button class="contact-modal-close" id="close-contact-modal">&times;</button>
-    <img id="modal-avatar" class="contact-modal-avatar" src="" alt="成員頭貼">
-    <h3 id="modal-name" style="font-size: 1.35rem; font-weight: 700; margin-bottom: 0.25rem;"></h3>
-    <div id="modal-role" style="color: #0284c7; font-weight: 600; font-size: 0.95rem; margin-bottom: 0.5rem;"></div>
-    <div id="modal-intro" style="font-size: 0.9rem; color: #64748b; line-height: 1.5; margin-bottom: 0.5rem;"></div>
-
-    <div class="contact-info-list">
-      <div><strong>信箱：</strong> <span id="modal-email">-</span></div>
+    <!-- 成員詳細資料彈窗 -->
+    <div class="contact-modal-overlay" id="contact-modal">
+      <div class="contact-modal-card">
+        <button class="contact-modal-close" id="close-contact-modal">&times;</button>
+        <img id="modal-avatar" class="contact-modal-avatar" src="" alt="成員頭貼">
+        <h3 id="modal-name" style="font-size: 1.35rem; font-weight: 700; margin-bottom: 0.25rem;"></h3>
+        <div id="modal-role" style="color: #0284c7; font-weight: 600; font-size: 0.95rem; margin-bottom: 0.5rem;"></div>
+        <div id="modal-intro" style="font-size: 0.9rem; color: #64748b; line-height: 1.5; margin-bottom: 0.5rem;"></div>
+        <div class="contact-info-list">
+          <div><strong>信箱：</strong> <span id="modal-email">-</span></div>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
+
+    <!-- 活動詳細大視窗 (近全螢幕 Modal) -->
+    <div class="activity-modal-overlay" id="activity-detail-modal" onclick="handleActivityOverlayClick(event)">
+      <div class="activity-modal-sheet">
+        <button class="activity-modal-close" onclick="closeActivityModal()">&times;</button>
+        <img id="act-modal-img" class="activity-modal-banner" src="" alt="活動宣傳照片">
+        <div class="activity-modal-body">
+          <h2 id="act-modal-title" style="font-size: 1.8rem; margin: 0 0 0.5rem 0; color: #0f172a;"></h2>
+          <span id="act-modal-badge" class="activity-badge" style="display: inline-block; margin-bottom: 0.8rem;">活動</span>
+
+          <div class="activity-modal-meta-bar">
+            <div>📅 <strong>活動時間：</strong><span id="act-modal-date">-</span></div>
+            <div>📍 <strong>活動地點：</strong><span id="act-modal-location">-</span></div>
+          </div>
+
+          <div id="act-modal-desc" class="activity-modal-desc"></div>
+
+          <a id="act-modal-link" href="#" target="_blank" class="activity-modal-action-btn">
+            🔗 前往報名 / 查看外部詳細連結
+          </a>
+        </div>
+      </div>
+    </div>
   </main>
 
   <footer>
@@ -408,7 +471,10 @@
       if (e.target === drawer) drawer.classList.remove("open");
     });
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") drawer.classList.remove("open");
+      if (e.key === "Escape") {
+        drawer.classList.remove("open");
+        closeActivityModal();
+      }
     });
 
     /* 幻燈片控制邏輯 */
@@ -438,169 +504,120 @@
       dot.addEventListener("click", () => { showSlide(idx); resetSlideTimer(); });
     });
     resetSlideTimer();
-/* 渲染活動橫向卡片 */
+
+    /* 成員資料快取與載入 */
+    let membersCache = [];
+    function loadMembers() {
+      const loadingEl = document.getElementById("members-loading");
+      const gridEl = document.getElementById("members-grid");
+
+      Papa.parse(CSV_CONFIG.membersUrl, {
+        download: true,
+        header: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+          loadingEl.style.display = "none";
+          gridEl.style.display = "grid";
+          gridEl.innerHTML = "";
+
+          membersCache = results.data;
+          if (membersCache.length === 0) {
+            gridEl.innerHTML = "<p style='grid-column: 1/-1; text-align: center; color: #64748b;'>目前無成員資料。</p>";
+            return;
+          }
+
+          membersCache.forEach((member, index) => {
+            const item = document.createElement("div");
+            item.className = "member-item";
+            const avatarUrl = (member.photoUrl && member.photoUrl.trim() !== "") 
+              ? formatDriveImage(member.photoUrl) 
+              : "https://via.placeholder.com/140?text=" + encodeURIComponent(member.name || 'NTU');
+
+            item.innerHTML = `
+              <img src="${avatarUrl}" alt="${member.name || ''}" class="member-avatar">
+              <div class="member-name">${member.name || ''}</div>
+              <div class="member-role">${member.role || ''}</div>
+            `;
+            item.addEventListener("click", () => openContactModal(index));
+            gridEl.appendChild(item);
+          });
+        }
+      });
+    }
+
+    /* 成員彈窗控制 */
+    const contactModal = document.getElementById("contact-modal");
+    const closeContactBtn = document.getElementById("close-contact-modal");
+    function openContactModal(index) {
+      const m = membersCache[index];
+      if (!m) return;
+
+      document.getElementById("modal-avatar").src = (m.photoUrl && m.photoUrl.trim() !== "") 
+        ? formatDriveImage(m.photoUrl) 
+        : "https://via.placeholder.com/100?text=" + encodeURIComponent(m.name || 'NTU');
+      
+      document.getElementById("modal-name").textContent = m.name || "未命名";
+      document.getElementById("modal-role").textContent = (m.department ? m.department + " ｜ " : "") + (m.role || "");
+      document.getElementById("modal-intro").textContent = m.intro || "無個人自介。";
+      document.getElementById("modal-email").innerHTML = m.email ? `<a href="mailto:${m.email}">${m.email}</a>` : "-";
+
+      contactModal.classList.add("open");
+    }
+    closeContactBtn.addEventListener("click", () => contactModal.classList.remove("open"));
+    contactModal.addEventListener("click", (e) => {
+      if (e.target === contactModal) contactModal.classList.remove("open");
+    });
+
+    /* ===================================================
+       活動公告、彈出大視窗與日曆邏輯
+       =================================================== */
+
+    let calendarEventsData = [];
+
+// 自動將各類 Google Drive 共享/預覽連結轉換為瀏覽器可直接顯示的直連端點
+function formatDriveImage(url) {
+  if (!url) return '';
+  const clean = url.trim();
+  
+  if (clean.includes("drive.google.com")) {
+    // 支援 /file/d/ID 或 id=ID 等多種連結結構
+    const match = clean.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || clean.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    if (match && match[1]) {
+      // 官方縮圖端點 (sz=w1200 確保在大螢幕與彈窗下皆為清晰高畫質)
+      return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1200`;
+    }
+  }
+  return clean;
+}
+
+    function formatDateKey(dateObj) {
+      const y = dateObj.getFullYear();
+      const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const d = String(dateObj.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function getEventDateDisplay(item) {
+      const start = item.startDate || item.date;
+      const end = item.endDate;
+      if (!start && !end) return '即將公布';
+      if (start && (!end || end === start)) return start;
+      return `${start} ~ ${end}`;
+    }
+
+    function getEventsForDate(dateKey) {
+      return calendarEventsData.filter(event => {
+        const start = event.startDate || event.date;
+        if (!start) return false;
+        const end = event.endDate || start;
+        return dateKey >= start && dateKey <= end;
+      });
+    }
+
+/* 渲染活動卡片 */
 function renderAnnouncements(data) {
   const loadingEl = document.getElementById("announcement-loading");
   const containerEl = document.getElementById("activities-container");
-
-  if (!data || data.length === 0) {
-    loadingEl.style.display = "none";
-    containerEl.style.display = "flex";
-    containerEl.innerHTML = "<p style='color: #64748b; padding: 1rem;'>目前暫無最新活動。</p>";
-    return;
-  }
-
-  containerEl.innerHTML = "";
-
-  data.forEach(item => {
-    // 預設活動圖片：可支援 Google Sheets 的 photoUrl 或預設圖
-    const imgUrl = (item.photoUrl && item.photoUrl.trim() !== '') 
-      ? item.photoUrl 
-      : 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=80';
-
-    const card = document.createElement("div");
-    card.className = "activity-card";
-    card.innerHTML = `
-      <div class="activity-card-img-wrap">
-        <img src="${imgUrl}" alt="${item.title || ''}" class="activity-card-img" loading="lazy">
-        <span class="activity-badge">${item.category || '活動'}</span>
-      </div>
-      <div class="activity-card-body">
-        <div class="activity-date">📅 ${item.date || '即將公布'}</div>
-        <div class="activity-title">${item.title || '活動名稱'}</div>
-        <div class="activity-desc">${item.description || '暫無詳細說明。'}</div>
-        <a href="${item.link || '#'}" target="${item.link ? '_blank' : '_self'}" class="activity-btn">
-          ${item.buttonText || '查看詳情'} →
-        </a>
-      </div>
-    `;
-    containerEl.appendChild(card);
-  });
-
-  loadingEl.style.display = "none";
-  containerEl.style.display = "flex";
-}
-
-
-    /* 成員資料快取 */
-let membersCache = [];
-
-function loadMembers() {
-  const loadingEl = document.getElementById("members-loading");
-  const gridEl = document.getElementById("members-grid");
-
-  Papa.parse(CSV_CONFIG.membersUrl, {
-    download: true,
-    header: true,
-    skipEmptyLines: true,
-    complete: function(results) {
-      loadingEl.style.display = "none";
-      gridEl.style.display = "grid";
-      gridEl.innerHTML = "";
-
-      membersCache = results.data;
-      if (membersCache.length === 0) {
-        gridEl.innerHTML = "<p style='grid-column: 1/-1; text-align: center; color: #64748b;'>目前無成員資料。</p>";
-        return;
-      }
-
-      membersCache.forEach((member, index) => {
-        const item = document.createElement("div");
-        item.className = "member-item";
-        
-        // 若 photoUrl 為空，自動產生預設代稱頭貼
-        const avatarUrl = (member.photoUrl && member.photoUrl.trim() !== "") 
-          ? member.photoUrl 
-          : "https://via.placeholder.com/140?text=" + encodeURIComponent(member.name || 'NTU');
-
-        item.innerHTML = `
-          <img src="${avatarUrl}" alt="${member.name || ''}" class="member-avatar">
-          <div class="member-name">${member.name || ''}</div>
-          <div class="member-role">${member.role || ''}</div>
-        `;
-
-        // 綁定點擊開啟彈窗
-        item.addEventListener("click", () => openContactModal(index));
-        gridEl.appendChild(item);
-      });
-    }
-  });
-}
-
-/* 聯絡彈窗控制 */
-const contactModal = document.getElementById("contact-modal");
-const closeContactBtn = document.getElementById("close-contact-modal");
-
-function openContactModal(index) {
-  const m = membersCache[index];
-  if (!m) return;
-
-  document.getElementById("modal-avatar").src = (m.photoUrl && m.photoUrl.trim() !== "") 
-    ? m.photoUrl 
-    : "https://via.placeholder.com/100?text=" + encodeURIComponent(m.name || 'NTU');
-  
-  document.getElementById("modal-name").textContent = m.name || "未命名";
-  document.getElementById("modal-role").textContent = (m.department ? m.department + " ｜ " : "") + (m.role || "");
-  document.getElementById("modal-intro").textContent = m.intro || "無個人自介。";
-
-  // 聯絡方式顯示處理
-  document.getElementById("modal-email").innerHTML = m.email 
-    ? `<a href="mailto:${m.email}">${m.email}</a>` 
-    : "-";
-
-  contactModal.classList.add("open");
-}
-
-closeContactBtn.addEventListener("click", () => contactModal.classList.remove("open"));
-contactModal.addEventListener("click", (e) => {
-  if (e.target === contactModal) contactModal.classList.remove("open");
-});
-
-    document.addEventListener("DOMContentLoaded", () => {
-      loadAnnouncements();
-      loadMembers();
-    });
-
-
-
-/* ===================================================
-   活動公告與日曆整合邏輯 (修復初次載入與日期顯示)
-   =================================================== */
-let currentCalDate = new Date();
-let calendarEventsData = [];
-
-// 輔助函式：將日期物件轉為 YYYY-MM-DD
-function formatDateKey(dateObj) {
-  const y = dateObj.getFullYear();
-  const m = String(dateObj.getMonth() + 1).padStart(2, '0');
-  const d = String(dateObj.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
-
-// 輔助函式：取得活動的顯示日期文字 (支援跨天: 2026-07-10 ~ 2026-07-14)
-function getEventDateDisplay(item) {
-  const start = item.startDate || item.date;
-  const end = item.endDate;
-  if (!start && !end) return '即將公布';
-  if (start && (!end || end === start)) return start;
-  return `${start} ~ ${end}`;
-}
-
-// 輔助函式：判斷某日期是否在活動區間內
-function getEventsForDate(dateKey) {
-  return calendarEventsData.filter(event => {
-    const start = event.startDate || event.date;
-    if (!start) return false;
-    const end = event.endDate || start;
-    return dateKey >= start && dateKey <= end;
-  });
-}
-
-/* 1. 渲染橫向滑動活動卡片 */
-function renderAnnouncements(data) {
-  const loadingEl = document.getElementById("announcement-loading");
-  const containerEl = document.getElementById("activities-container") || document.getElementById("announcement-list");
-
   if (!containerEl) return;
 
   if (!data || data.length === 0) {
@@ -612,30 +629,33 @@ function renderAnnouncements(data) {
 
   containerEl.innerHTML = "";
 
-  data.forEach(item => {
-    const imgUrl = (item.photoUrl && item.photoUrl.trim() !== '') 
-      ? item.photoUrl 
+  data.forEach((item) => {
+    // 相容 photoUrl 與 imageUrl 兩種欄位命名
+    const rawPhoto = item.photoUrl || item.imageUrl || '';
+    const imgUrl = rawPhoto.trim() !== '' 
+      ? formatDriveImage(rawPhoto) 
       : 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=80';
-
-    // 取得正確的日期字串 (單日或區間)
+    
     const dateText = getEventDateDisplay(item);
 
     const card = document.createElement("div");
     card.className = "activity-card";
     card.innerHTML = `
       <div class="activity-card-img-wrap">
-        <img src="${imgUrl}" alt="${item.title || ''}" class="activity-card-img" loading="lazy">
+        <img src="${imgUrl}" alt="${item.title || ''}" class="activity-card-img" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=80'">
         <span class="activity-badge">${item.category || '活動'}</span>
       </div>
       <div class="activity-card-body">
         <div class="activity-date">📅 ${dateText}</div>
         <div class="activity-title">${item.title || '活動名稱'}</div>
-        <div class="activity-desc">${item.description || '暫無詳細說明。'}</div>
-        <a href="${item.link || '#'}" target="${item.link ? '_blank' : '_self'}" class="activity-btn">
+        <div class="activity-desc">${item.description || '點擊展開查看完整資訊。'}</div>
+        <div class="activity-btn" style="display:inline-block; margin-top: auto;">
           ${item.buttonText || '查看詳情'} →
-        </a>
+        </div>
       </div>
     `;
+
+    card.addEventListener("click", () => openActivityModal(item));
     containerEl.appendChild(card);
   });
 
@@ -643,162 +663,215 @@ function renderAnnouncements(data) {
   containerEl.style.display = "flex";
 }
 
-/* 2. 渲染活動日曆 (支援直接點擊標籤開啟活動連結) */
-function renderCalendar() {
-  const year = currentCalDate.getFullYear();
-  const month = currentCalDate.getMonth(); // 0-indexed
+/* 活動詳細大視窗：顯示 Drive 照片 */
+function openActivityModal(item) {
+  document.getElementById("act-modal-title").textContent = item.title || "活動公告";
+  document.getElementById("act-modal-badge").textContent = item.category || "活動";
+  document.getElementById("act-modal-date").textContent = getEventDateDisplay(item);
+  document.getElementById("act-modal-location").textContent = item.location || "台大機械工程學系 / 請見說明";
+  document.getElementById("act-modal-desc").textContent = item.fullDesc || item.description || "暫無詳細說明。";
 
-  // 更新頂部顯示的年份與月份
-  const monthDisplayEl = document.getElementById("cal-month-display");
-  if (monthDisplayEl) {
-    monthDisplayEl.textContent = `${year} 年 ${month + 1} 月`;
+  const imgEl = document.getElementById("act-modal-img");
+  const rawPhoto = item.photoUrl || item.imageUrl || '';
+  if (rawPhoto.trim() !== '') {
+    imgEl.src = formatDriveImage(rawPhoto);
+    imgEl.style.display = "block";
+  } else {
+    imgEl.style.display = "none";
   }
 
-  const grid = document.getElementById("cal-days-grid");
-  if (!grid) return;
-  grid.innerHTML = "";
-
-  const firstDayIndex = new Date(year, month, 1).getDay();
-  const totalDays = new Date(year, month + 1, 0).getDate();
-  const prevMonthTotalDays = new Date(year, month, 0).getDate();
-  const todayStr = formatDateKey(new Date());
-
-  // 1. 上個月尾巴格子
-  for (let i = firstDayIndex - 1; i >= 0; i--) {
-    const dayNum = prevMonthTotalDays - i;
-    const cell = document.createElement("div");
-    cell.className = "cal-day-cell other-month";
-    cell.innerHTML = `<div class="cal-day-num">${dayNum}</div>`;
-    grid.appendChild(cell);
+  const linkBtn = document.getElementById("act-modal-link");
+  if (item.link && item.link.trim() !== '' && item.link.trim() !== '#') {
+    linkBtn.href = item.link;
+    linkBtn.style.display = "inline-flex";
+    linkBtn.textContent = item.buttonText ? `🔗 ${item.buttonText}` : "🔗 前往報名 / 查看外部詳細連結";
+  } else {
+    linkBtn.style.display = "none";
   }
 
-  // 2. 本月日期格子
-  for (let day = 1; day <= totalDays; day++) {
-    const thisDate = new Date(year, month, day);
-    const dateKey = formatDateKey(thisDate);
-    const eventsOnThisDay = getEventsForDate(dateKey);
-
-    const cell = document.createElement("div");
-    cell.className = "cal-day-cell";
-    if (dateKey === todayStr) {
-      cell.classList.add("today");
-    }
-
-    // 建立日期數字
-    const dayNumEl = document.createElement("div");
-    dayNumEl.className = "cal-day-num";
-    dayNumEl.textContent = day;
-    cell.appendChild(dayNumEl);
-
-    // 建立活動標籤容器
-    const chipsContainer = document.createElement("div");
-    chipsContainer.className = "cal-event-chips";
-
-    eventsOnThisDay.forEach(ev => {
-      const start = ev.startDate || ev.date;
-      const end = ev.endDate || start;
-      const isMulti = (end && end !== start);
-
-      const chip = document.createElement("div");
-      chip.className = `cal-event-chip ${isMulti ? 'multi-day' : ''}`;
-      chip.textContent = ev.title;
-      chip.title = ev.link ? `點擊前往：${ev.title}` : ev.title;
-
-      // 關鍵：直接點擊活動標籤時開啟外部連結或詳情
-      chip.addEventListener("click", (e) => {
-        e.stopPropagation(); // 阻止事件冒泡，避免同時觸發底層格子的 click
-        if (ev.link && ev.link.trim() !== '' && ev.link.trim() !== '#') {
-          window.open(ev.link, "_blank"); // 在新分頁開啟活動連結
-        } else {
-          // 若無連結，則展開下方詳情卡片
-          showDateDetails(dateKey, [ev]);
-        }
-      });
-
-      chipsContainer.appendChild(chip);
-    });
-
-    cell.appendChild(chipsContainer);
-
-    // 點擊日期格子空白處，依然展開該天所有活動列表
-    cell.addEventListener("click", () => showDateDetails(dateKey, eventsOnThisDay));
-    grid.appendChild(cell);
-  }
-
-  // 3. 下個月開頭補滿
-  const totalRendered = firstDayIndex + totalDays;
-  const remainingCells = (7 - (totalRendered % 7)) % 7;
-  for (let nextDay = 1; nextDay <= remainingCells; nextDay++) {
-    const cell = document.createElement("div");
-    cell.className = "cal-day-cell other-month";
-    cell.innerHTML = `<div class="cal-day-num">${nextDay}</div>`;
-    grid.appendChild(cell);
-  }
+  document.getElementById("activity-detail-modal").style.display = "flex";
+  document.body.style.overflow = "hidden";
 }
-/* 3. 讀取公告與日曆資料 (含快取秒開) */
-function loadAnnouncements() {
-  // 先嘗試從快取讀取
-  const cachedData = localStorage.getItem("ntumesa_announcements_cache");
-  if (cachedData) {
-    try {
-      const parsed = JSON.parse(cachedData);
-      calendarEventsData = parsed;
-      renderAnnouncements(parsed);
-      renderCalendar(); // 快取有資料時立刻畫出日曆
-    } catch (e) {
-      console.warn("公告快取解析失敗", e);
-    }
-  }
 
-  // 從 Google Sheets 抓取最新資料
-  Papa.parse(CSV_CONFIG.announcementsUrl, {
-    download: true,
-    header: true,
-    skipEmptyLines: true,
-    complete: function(results) {
-      const published = results.data.filter(item => 
-        item.title && item.title.trim() !== '' && (!item.status || item.status.trim().toLowerCase() === 'published')
-      );
-      
-      calendarEventsData = published;
-      localStorage.setItem("ntumesa_announcements_cache", JSON.stringify(published));
-      
-      // 重新渲染公告卡片與日曆
-      renderAnnouncements(published);
-      renderCalendar();
-    },
-    error: function(err) {
-      console.error("載入活動失敗:", err);
-      if (!cachedData) {
-        const loadingEl = document.getElementById("announcement-loading");
-        if (loadingEl) loadingEl.textContent = "載入活動失敗，請重新整理頁面。";
+    function closeActivityModal() {
+      document.getElementById("activity-detail-modal").style.display = "none";
+      document.body.style.overflow = "auto";
+    }
+
+    function handleActivityOverlayClick(e) {
+      if (e.target.id === "activity-detail-modal") {
+        closeActivityModal();
       }
     }
-  });
-}
 
-// 綁定切換月份按鈕
-const prevBtn = document.getElementById("cal-prev-month");
-const nextBtn = document.getElementById("cal-next-month");
-if (prevBtn) {
-  prevBtn.addEventListener("click", () => {
-    currentCalDate.setMonth(currentCalDate.getMonth() - 1);
-    renderCalendar();
-  });
-}
-if (nextBtn) {
-  nextBtn.addEventListener("click", () => {
-    currentCalDate.setMonth(currentCalDate.getMonth() + 1);
-    renderCalendar();
-  });
-}
+    /* ===================================================
+       活動日曆：自動抓取當前電腦/手機系統時間與正確生成演算法
+       =================================================== */
+    let currentCalDate = new Date();
 
-/* 頁面載入時的初始化 */
-document.addEventListener("DOMContentLoaded", () => {
-  renderCalendar();   // 進入頁面第一時間先畫出當前月份的日曆格子
-  loadAnnouncements();
-  loadMembers();
-});
+    function renderCalendar() {
+      const year = currentCalDate.getFullYear();
+      const month = currentCalDate.getMonth();
+
+      const monthDisplayEl = document.getElementById("cal-month-display");
+      if (monthDisplayEl) {
+        monthDisplayEl.textContent = `${year} 年 ${month + 1} 月`;
+      }
+
+      const grid = document.getElementById("cal-days-grid");
+      if (!grid) return;
+      grid.innerHTML = "";
+
+      const firstDayWeek = new Date(year, month, 1).getDay();
+      const totalDays = new Date(year, month + 1, 0).getDate();
+      const prevMonthDays = new Date(year, month, 0).getDate();
+      
+      const today = new Date();
+      const todayStr = formatDateKey(today);
+
+      for (let i = 0; i < firstDayWeek; i++) {
+        const dayNum = prevMonthDays - firstDayWeek + 1 + i;
+        const cell = document.createElement("div");
+        cell.className = "cal-day-cell other-month";
+        cell.innerHTML = `<div class="cal-day-num">${dayNum}</div>`;
+        grid.appendChild(cell);
+      }
+
+      for (let day = 1; day <= totalDays; day++) {
+        const thisDate = new Date(year, month, day);
+        const dateKey = formatDateKey(thisDate);
+        const eventsOnThisDay = getEventsForDate(dateKey);
+
+        const cell = document.createElement("div");
+        cell.className = "cal-day-cell";
+        if (dateKey === todayStr) cell.classList.add("today");
+
+        const dayNumEl = document.createElement("div");
+        dayNumEl.className = "cal-day-num";
+        dayNumEl.textContent = day;
+        cell.appendChild(dayNumEl);
+
+        const chipsContainer = document.createElement("div");
+        chipsContainer.className = "cal-event-chips";
+
+        eventsOnThisDay.forEach(ev => {
+          const start = ev.startDate || ev.date;
+          const end = ev.endDate || start;
+          const isMulti = (end && end !== start);
+
+          const chip = document.createElement("div");
+          chip.className = `cal-event-chip ${isMulti ? 'multi-day' : ''}`;
+          chip.textContent = ev.title;
+          chip.title = `點擊查看詳情：${ev.title}`;
+
+          chip.addEventListener("click", (e) => {
+            e.stopPropagation();
+            openActivityModal(ev);
+          });
+          chipsContainer.appendChild(chip);
+        });
+
+        cell.appendChild(chipsContainer);
+        cell.addEventListener("click", () => showDateDetails(dateKey, eventsOnThisDay));
+        grid.appendChild(cell);
+      }
+
+      const totalRendered = firstDayWeek + totalDays;
+      const remainingCells = (7 - (totalRendered % 7)) % 7;
+      for (let nextDay = 1; nextDay <= remainingCells; nextDay++) {
+        const cell = document.createElement("div");
+        cell.className = "cal-day-cell other-month";
+        cell.innerHTML = `<div class="cal-day-num">${nextDay}</div>`;
+        grid.appendChild(cell);
+      }
+    }
+
+    function showDateDetails(dateKey, events) {
+      const titleEl = document.getElementById("cal-details-date-title");
+      const listEl = document.getElementById("cal-details-list");
+      if (!titleEl || !listEl) return;
+
+      titleEl.textContent = `${dateKey} 活動明細`;
+      listEl.innerHTML = "";
+
+      if (!events || events.length === 0) {
+        listEl.innerHTML = "<p style='color: #64748b; font-size: 0.9rem;'>當日暫無排定活動。</p>";
+        return;
+      }
+
+      events.forEach(ev => {
+        const row = document.createElement("div");
+        row.style.padding = "0.6rem 0";
+        row.style.borderBottom = "1px solid #f1f5f9";
+        row.style.display = "flex";
+        row.style.justifyContent = "space-between";
+        row.style.alignItems = "center";
+        row.innerHTML = `
+          <div>
+            <strong>${ev.title}</strong>
+            <div style="font-size: 0.85rem; color: #64748b;">${ev.category || '活動'} ｜ ${getEventDateDisplay(ev)}</div>
+          </div>
+          <button style="background: #0284c7; color: #fff; border: none; padding: 0.35rem 0.75rem; border-radius: 6px; font-size: 0.82rem; cursor: pointer;">
+            詳細資訊
+          </button>
+        `;
+        row.querySelector("button").addEventListener("click", () => openActivityModal(ev));
+        listEl.appendChild(row);
+      });
+    }
+
+    function loadAnnouncements() {
+      const cachedData = localStorage.getItem("ntumesa_announcements_cache");
+      if (cachedData) {
+        try {
+          const parsed = JSON.parse(cachedData);
+          calendarEventsData = parsed;
+          renderAnnouncements(parsed);
+          renderCalendar();
+        } catch (e) {
+          console.warn("公告快取解析失敗", e);
+        }
+      }
+
+      Papa.parse(CSV_CONFIG.announcementsUrl, {
+        download: true,
+        header: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+          const published = results.data.filter(item => 
+            item.title && item.title.trim() !== '' && (!item.status || item.status.trim().toLowerCase() === 'published')
+          );
+          calendarEventsData = published;
+          localStorage.setItem("ntumesa_announcements_cache", JSON.stringify(published));
+          renderAnnouncements(published);
+          renderCalendar();
+        },
+        error: function(err) {
+          console.error("載入活動失敗:", err);
+        }
+      });
+    }
+
+    const prevBtn = document.getElementById("cal-prev-month");
+    const nextBtn = document.getElementById("cal-next-month");
+    if (prevBtn) {
+      prevBtn.addEventListener("click", () => {
+        currentCalDate.setMonth(currentCalDate.getMonth() - 1);
+        renderCalendar();
+      });
+    }
+    if (nextBtn) {
+      nextBtn.addEventListener("click", () => {
+        currentCalDate.setMonth(currentCalDate.getMonth() + 1);
+        renderCalendar();
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      renderCalendar();
+      loadAnnouncements();
+      loadMembers();
+    });
   </script>
 </body>
 </html>
