@@ -148,6 +148,7 @@ header {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
   transition: all 0.3s;
 }
+
 /* 頁面主要容器 */
 main {
   flex: 1;
@@ -163,7 +164,7 @@ main {
 .slider-container {
   position: relative;
   width: 100vw;
-  height: 85vh;               /* 高度佔據螢幕 85%，可視需要改為 100vh */
+  height: 85vh;
   min-height: 550px;
   overflow: hidden;
   background-color: #0f172a;
@@ -188,10 +189,10 @@ main {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 30%; /* 避免人臉被裁切 */
+  object-position: center 30%;
 }
 
-/* 向下滾動小箭頭指示器 (Chevron) */
+/* 向下滾動小箭頭指示器 */
 .scroll-indicator {
   position: absolute;
   bottom: 2rem;
@@ -321,6 +322,7 @@ main {
   background: #e0f2fe;
   color: #0284c7;
 }
+
 /* ===================================================
    最新活動公告樣式
    =================================================== */
@@ -379,137 +381,6 @@ main {
    =================================================== */
 .members-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 1.5rem;
-  margin-top: 1.5rem;
-}
-
-.member-card {
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius);
-  padding: 1.5rem;
-  text-align: center;
-  box-shadow: var(--shadow);
-}
-
-.member-avatar {
-  width: 90px;
-  height: 90px;
-  border-radius: 50%;
-  object-fit: cover;
-  background: #e2e8f0;
-  margin: 0 auto 1rem auto;
-}
-
-.member-name {
-  font-size: 1.15rem;
-  font-weight: 700;
-}
-
-.member-role {
-  color: var(--primary-color);
-  font-weight: 600;
-  font-size: 0.9rem;
-  margin-bottom: 0.25rem;
-}
-
-.member-dept {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  margin-bottom: 0.75rem;
-}
-
-.member-intro {
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-}
-
-/* ===================================================
-   按鈕與檔案表格通用樣式
-   =================================================== */
-.btn {
-  display: inline-block;
-  background: var(--primary-color);
-  color: white;
-  padding: 0.5rem 1.2rem;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  cursor: pointer;
-  border: none;
-  text-decoration: none;
-}
-
-.btn:hover {
-  background: var(--primary-hover);
-}
-
-.upload-box {
-  background: var(--card-bg);
-  border: 2px dashed #94a3b8;
-  border-radius: var(--radius);
-  padding: 2.5rem 1.5rem;
-  text-align: center;
-  margin-bottom: 2.5rem;
-}
-
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: var(--card-bg);
-  border-radius: var(--radius);
-  overflow: hidden;
-  box-shadow: var(--shadow);
-}
-
-.data-table th, .data-table td {
-  padding: 1rem 1.2rem;
-  border-bottom: 1px solid var(--border-color);
-  text-align: left;
-}
-
-.data-table th {
-  background: #f1f5f9;
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-}
-
-footer {
-  text-align: center;
-  padding: 2rem;
-  background: var(--card-bg);
-  border-top: 1px solid var(--border-color);
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-}
-
-/* ===================================================
-   團隊介紹區塊樣式 (每排最多 4 位)
-   =================================================== */
-.team-section-header {
-  text-align: center;
-  margin-bottom: 3.5rem;
-}
-
-.team-title {
-  font-size: 2.2rem;
-  font-weight: 800;
-  color: #1e293b;
-  letter-spacing: 2px;
-  margin-bottom: 0.25rem;
-}
-
-.team-subtitle {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #64748b;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-}
-
-/* 4 欄網格排版，自適應手機螢幕 */
-.members-grid {
-  display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 3rem 2rem;
   max-width: 1050px;
@@ -529,7 +400,6 @@ footer {
   }
 }
 
-/* 成員項目樣式 */
 .member-item {
   display: flex;
   flex-direction: column;
@@ -690,7 +560,6 @@ footer {
   margin-top: 0.25rem;
 }
 
-/* 橫向滾動容器 */
 .activities-scroll-container {
   display: flex;
   gap: 1.5rem;
@@ -700,7 +569,6 @@ footer {
   -webkit-overflow-scrolling: touch;
 }
 
-/* 自訂滑動拉條 (Scrollbar) */
 .activities-scroll-container::-webkit-scrollbar {
   height: 8px;
 }
@@ -719,9 +587,8 @@ footer {
   background: #94a3b8;
 }
 
-/* 單個活動方塊卡片 */
 .activity-card {
-  flex: 0 0 320px;            /* 每張卡片固定寬度 320px */
+  flex: 0 0 320px;
   scroll-snap-align: start;
   background: #ffffff;
   border-radius: 14px;
@@ -731,6 +598,7 @@ footer {
   display: flex;
   flex-direction: column;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
 }
 
 .activity-card:hover {
@@ -738,7 +606,6 @@ footer {
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
 }
 
-/* 封面圖片區 */
 .activity-card-img-wrap {
   width: 100%;
   height: 180px;
@@ -771,7 +638,6 @@ footer {
   border-radius: 20px;
 }
 
-/* 文字介紹與按鈕內容區 */
 .activity-card-body {
   padding: 1.25rem;
   display: flex;
@@ -800,7 +666,6 @@ footer {
   line-height: 1.5;
   margin-bottom: 1.25rem;
   flex: 1;
-/* 超過 3 行顯示省略號 */
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
@@ -808,7 +673,6 @@ footer {
   overflow: hidden;
 }
 
-/* 動作按鈕 */
 .activity-btn {
   display: inline-flex;
   align-items: center;
@@ -830,17 +694,19 @@ footer {
 }
 
 /* ===================================================
-   活動日曆區塊 (Activity Calendar)
+   活動日曆區塊 (修復：嚴格對齊 7 等分與等距間隙)
    =================================================== */
 .calendar-section {
-  max-width: 950px;
-  margin: 4rem auto;
-  padding: 0 1.5rem;
+  width: 100%;
+  max-width: 1000px;
+  margin: 3.5rem auto;
+  padding: 0 1rem;
+  box-sizing: border-box;
 }
 
 .calendar-header {
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 .calendar-title {
@@ -859,13 +725,12 @@ footer {
   text-transform: uppercase;
 }
 
-/* 頂部切換與星期導覽列 (完全貼合附圖) */
 .calendar-nav-bar {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
-  margin-bottom: 0.75rem;
+  margin-bottom: 1.25rem;
 }
 
 .cal-nav-btn {
@@ -893,52 +758,62 @@ footer {
   text-align: center;
 }
 
-/* 附圖中的圓角邊框星期欄 */
+/* 日曆外層包覆層（防止手機螢幕破版，支援水平滑動） */
+.calendar-responsive-grid-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 1rem;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+}
+
+.cal-table-wrap {
+  min-width: 680px;
+  width: 100%;
+}
+
+/* 星期欄：使用與下方完全相同的 repeat(7, 1fr) 與 gap: 8px */
 .cal-weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  border: 1px solid #cbd5e1;
-  border-radius: 30px;
-  overflow: hidden;
-  background: #ffffff;
-  margin-bottom: 1rem;
+  gap: 8px;
+  margin-bottom: 8px;
+  width: 100%;
 }
 
 .cal-weekday {
   text-align: center;
-  padding: 0.6rem 0;
+  padding: 0.65rem 0;
   font-size: 0.95rem;
-  font-weight: 600;
-  color: #334155;
-  border-right: 1px solid #e2e8f0;
+  font-weight: 700;
+  color: #475569;
+  background: #f1f5f9;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
 }
 
-.cal-weekday:last-child {
-  border-right: none;
-}
-
-/* 日期網格 (7x5 或 7x6) */
+/* 日期網格：保證嚴格對齊 */
 .cal-days-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 6px;
-  background: #f8fafc;
-  padding: 10px;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
+  gap: 8px;
+  width: 100%;
 }
 
 .cal-day-cell {
   background: #ffffff;
   border-radius: 10px;
-  min-height: 85px;
-  padding: 6px 8px;
+  min-height: 95px;
+  padding: 8px;
   display: flex;
   flex-direction: column;
-  border: 1px solid #f1f5f9;
-  transition: all 0.2s;
+  border: 1px solid #e2e8f0;
+  transition: all 0.15s ease;
   cursor: pointer;
-  position: relative;
+  box-sizing: border-box;
 }
 
 .cal-day-cell:hover {
@@ -948,13 +823,8 @@ footer {
 
 .cal-day-cell.other-month {
   background: #f8fafc;
-  color: #cbd5e1;
+  opacity: 0.45;
   cursor: default;
-}
-
-.cal-day-cell.other-month:hover {
-  border-color: #f1f5f9;
-  box-shadow: none;
 }
 
 .cal-day-cell.today .cal-day-num {
@@ -975,15 +845,13 @@ footer {
   margin-bottom: 4px;
 }
 
-/* 日期格內的活動標籤 (支援多天活動色條) */
 .cal-event-chips {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
   overflow: hidden;
 }
 
-/* 日期格內的活動標籤 (支援點擊開啟連結) */
 .cal-event-chip {
   font-size: 0.72rem;
   padding: 3px 6px;
@@ -995,27 +863,20 @@ footer {
   overflow: hidden;
   text-overflow: ellipsis;
   border-left: 3px solid #0284c7;
-  cursor: pointer;                 /* 滑鼠移上去變小手 */
+  cursor: pointer;
   transition: all 0.15s ease;
   display: block;
-  text-decoration: none;
 }
 
 .cal-event-chip:hover {
   filter: brightness(0.95);
   transform: translateY(-1px);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
 }
 
-/* 跨天活動持續標籤 */
 .cal-event-chip.multi-day {
   background: #fef3c7;
   color: #92400e;
   border-left-color: #f59e0b;
-}
-
-.cal-event-chip.multi-day:hover {
-  background: #fde68a;
 }
 
 /* 當天活動詳細面板 */
@@ -1048,28 +909,6 @@ footer {
   flex-direction: column;
   gap: 0.75rem;
 }
-
-.cal-detail-item {
-  padding: 0.75rem;
-  background: #f8fafc;
-  border-radius: 8px;
-  border-left: 4px solid #0284c7;
-}
-
-@media (max-width: 640px) {
-  .cal-day-cell {
-    min-height: 60px;
-    padding: 4px;
-  }
-  .cal-event-chip {
-    font-size: 0.65rem;
-    padding: 1px 3px;
-  }
-  .cal-weekdays {
-    border-radius: 20px;
-  }
-}
-
 
 /* ===================================================
    資料庫橫幅區塊 (NTUME Database Banner)
@@ -1140,13 +979,6 @@ footer {
   justify-content: center;
 }
 
-.db-banner-img {
-  mix-blend-mode: multiply;
-  /* 如果覺得太靠近邊緣，也可以微調大小與陰影 */
-  max-height: 180px;
-  object-fit: contain;
-}
-
 @media (max-width: 768px) {
   .db-banner-card {
     flex-direction: column-reverse;
@@ -1154,16 +986,19 @@ footer {
     padding: 2.5rem 1.5rem;
     gap: 2rem;
   }
-
   .db-banner-img-wrap {
     margin-left: 0;
   }
-
-  .db-banner-img {
-    width: 180px;
-  }
-
   .db-banner-subtitle {
     margin-bottom: 1.8rem;
   }
+}
+
+footer {
+  text-align: center;
+  padding: 2rem;
+  background: var(--card-bg);
+  border-top: 1px solid var(--border-color);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
 }
