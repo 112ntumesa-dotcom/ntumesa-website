@@ -50,6 +50,7 @@ header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 1rem;
 }
 
 /* 左側 Logo 區域 */
@@ -58,6 +59,8 @@ header {
   align-items: center;
   gap: 0.75rem;
   text-decoration: none;
+  flex-shrink: 0 !important;
+  white-space: nowrap !important;
 }
 
 .site-logo img {
@@ -67,6 +70,7 @@ header {
   object-fit: cover;
   background: #fff;
   padding: 2px;
+  flex-shrink: 0;
 }
 
 .site-title {
@@ -75,6 +79,7 @@ header {
   color: #ffffff;
   letter-spacing: 0.5px;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+  white-space: nowrap !important;
 }
 
 /* 右側導覽群組 */
@@ -82,6 +87,7 @@ header {
   display: flex;
   align-items: center;
   gap: 1.5rem;
+  flex-shrink: 0;
 }
 
 .nav-links {
@@ -89,6 +95,13 @@ header {
   list-style: none;
   gap: 1.5rem;
   align-items: center;
+  margin: 0;
+  padding: 0;
+  white-space: nowrap !important;
+}
+
+.nav-links li {
+  white-space: nowrap !important;
 }
 
 .nav-links a {
@@ -98,6 +111,7 @@ header {
   font-size: 0.95rem;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
   transition: opacity 0.2s;
+  white-space: nowrap !important;
 }
 
 .nav-links a:hover {
@@ -118,6 +132,8 @@ header {
   text-decoration: none;
   box-shadow: 0 4px 10px rgba(0, 112, 243, 0.3);
   transition: transform 0.15s, background 0.2s;
+  white-space: nowrap !important;
+  flex-shrink: 0;
 }
 
 .pill-btn:hover {
@@ -136,7 +152,8 @@ header {
   width: 24px;
   height: 18px;
   padding: 0;
-  margin-left: 0.5rem;
+  margin-left: 0.25rem;
+  flex-shrink: 0;
 }
 
 .hamburger-btn span {
@@ -1004,29 +1021,41 @@ footer {
 }
 
 /* ===================================================
-   導覽列響應式防破版修復 (小螢幕與手機端)
+   全站導覽列小螢幕/手機防折字與破版修復
    =================================================== */
 
-/* 1. 確保所有導覽文字永不自動換行 */
-.site-title,
-.nav-links a,
-.pill-btn {
-  white-space: nowrap !important;
+/* 1. 寬度不足 (<= 960px) 時：隱藏桌機版文字連結，讓漢堡選單接手 */
+@media (max-width: 960px) {
+  .nav-wrap {
+    padding: 0 1.25rem !important;
+  }
+
+  .nav-links {
+    display: none !important;
+  }
+
+  .nav-right {
+    gap: 0.75rem !important;
+  }
+
+  .site-title {
+    font-size: 1.1rem !important;
+  }
+
+  .pill-btn {
+    padding: 0.38rem 0.85rem !important;
+    font-size: 0.85rem !important;
+  }
 }
 
-.site-logo {
-  flex-shrink: 0;
-}
-
-/* 2. 平板與手機版尺寸調整 (寬度小於 768px) */
-@media (max-width: 768px) {
+/* 2. 手機螢幕 (<= 640px) */
+@media (max-width: 640px) {
   .nav-wrap {
     padding: 0 1rem !important;
   }
 
-  /* Logo 標題微調縮小，防止佔用過多空間 */
   .site-title {
-    font-size: 1.05rem !important;
+    font-size: 1rem !important;
   }
 
   .site-logo img {
@@ -1034,31 +1063,20 @@ footer {
     height: 30px !important;
   }
 
-  .nav-right {
-    gap: 0.75rem !important;
-  }
-
-  /* 關鍵：小螢幕時隱藏桌面版純文字連結，由漢堡選單接手 */
-  .nav-links {
-    display: none !important;
-  }
-
-  /* 機械營膠囊按鈕縮小 padding 與字級，維持膠囊比例不折行 */
   .pill-btn {
-    padding: 0.35rem 0.75rem !important;
-    font-size: 0.82rem !important;
+    padding: 0.32rem 0.7rem !important;
+    font-size: 0.8rem !important;
   }
 }
 
-/* 3. 超窄螢幕適應 (寬度小於 420px，如 iPhone SE) */
-@media (max-width: 420px) {
+/* 3. 超窄手機 (<= 400px，如 iPhone SE) */
+@media (max-width: 400px) {
   .site-title {
-    font-size: 0.95rem !important;
+    font-size: 0.9rem !important;
   }
 
-  /* 若寬度極窄，只保留機械營圖示或稍微精簡 padding */
   .pill-btn {
-    padding: 0.3rem 0.6rem !important;
-    font-size: 0.78rem !important;
+    padding: 0.28rem 0.55rem !important;
+    font-size: 0.75rem !important;
   }
 }
