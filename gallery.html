@@ -291,55 +291,94 @@
   </div>
 
   <script>
-// 綁定發布的 gallery 分頁 CSV 網址 (gid=497116616)
     const GALLERY_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTx0GJyuaRNXxtHNiN750VXs5IOkjA1hdOKsEEPVB7UluLglOm_F-vsix4cMoej9egFkAAdkLQfuVTS/pub?gid=497116616&single=true&output=csv";
 
     let albumsData = [];
     let currentYear = "ALL";
+
+    // 自動轉換 Google Drive 直連圖片
+    function formatDriveImage(url) {
+      if (!url) return '';
+      const clean = url.trim();
+      if (clean.includes("drive.google.com")) {
+        const match = clean.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || clean.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+        if (match && match[1]) {
+          return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1200`;
+        }
+      }
+      return clean;
+    }
+
+    // 核心演算法：將字串轉換為標準「民國學年度數字」
+    function parseAcademicYear(yearRaw, dateRaw) {
+      // 1. 若 year 欄位填入純數字或有數字 (如 "114", "114學年度", "2025")
+      if (yearRaw && yearRaw.trim() !== '') {
+        const numMatch = yearRaw.match(/\d+/);
+        if (numMatch) {
+          let y = parseInt(numMatch[0], 10);
+          if (y > 1900) {
+            // 若為西元年 (例如 2025)，若有附帶日期則精準判斷，否則直接轉民國
+            return y - 1911;
+          }
+          return y;
+        }
+      }
+
+      // 2. 依據活動日期 (date) 精確換算學年度 (8月1日起為新學年)
+      if (dateRaw && dateRaw.trim() !== '') {
+        const d = new Date(dateRaw.replace(/\./g, '-').replace(/\//g, '-'));
+        if (!isNaN(d.getTime())) {
+          const westernYear = d.getFullYear();
+          const month = d.getMonth() + 1; // 1 ~ 12
+          return month >= 8 ? (westernYear - 1911) : (westernYear - 1911 - 1);
+        }
+      }
+
+      return null;
+    }
 
     function loadGalleryData() {
       const url = GALLERY_CSV_URL + (GALLERY_CSV_URL.includes('?') ? '&' : '?') + '_t=' + Date.now();
 
       Papa.parse(url, {
         download: true,
-        header: false, // 改用陣列讀取，避免表頭中英文不符問題
+        header: false,
         skipEmptyLines: true,
         complete: function(results) {
-          console.log("CSV 原始讀取結果:", results.data);
-
           if (!results.data || results.data.length <= 1) {
-            console.warn("試算表除了表頭外沒有資料列！");
             renderAlbums();
             return;
           }
 
-          // 去掉第 1 列表頭，從第 2 列開始解析
           const rows = results.data.slice(1);
 
           albumsData = rows.map((row, index) => {
-            // 對應欄位順序：
-            // 0: year, 1: albumName, 2: folderUrl, 3: coverFileName, 
-            // 4: coverPreview, 5: coverUrl, 6: photoUrls, 7: date, 8: description
-            const year = (row[0] || "").trim() || "其他";
+            const rawYear = (row[0] || "").trim();
             const albumName = (row[1] || "").trim() || `活動相簿 ${index + 1}`;
-            const coverUrl = (row[5] || "").trim();
+            const coverUrlRaw = (row[5] || "").trim();
             const photoUrlsRaw = (row[6] || "").trim();
             const date = (row[7] || "").trim();
             const description = (row[8] || "").trim();
 
-            const photoUrls = photoUrlsRaw ? photoUrlsRaw.split(",").map(u => u.trim()).filter(Boolean) : [];
+            const photoUrls = photoUrlsRaw 
+              ? photoUrlsRaw.split(",").map(u => formatDriveImage(u)).filter(Boolean) 
+              : [];
+
+            // 換算為統一學年度
+            const academicYear = parseAcademicYear(rawYear, date);
 
             return {
-              year,
+              academicYear: academicYear,
               albumName,
-              coverUrl: coverUrl || (photoUrls.length > 0 ? photoUrls[0] : ""),
+              coverUrl: formatDriveImage(coverUrlRaw) || (photoUrls.length > 0 ? photoUrls[0] : ""),
               photoUrls,
               date,
               description
             };
           }).filter(album => album.albumName && (album.coverUrl || album.photoUrls.length > 0));
 
-          console.log("解析後的相簿資料:", albumsData);
+          // 將相簿由最新學年度排到最舊學年度 (由大到小)
+          albumsData.sort((a, b) => (b.academicYear || 0) - (a.academicYear || 0));
 
           renderYearTabs();
           renderAlbums();
@@ -357,15 +396,36 @@
 
     function renderYearTabs() {
       const tabsContainer = document.getElementById("year-tabs");
-      const years = ["ALL", ...new Set(albumsData.map(a => a.year))];
+      
+      // 收集所有出現過的學年度數字，並做去重
+      const yearSet = new Set();
+      albumsData.forEach(a => {
+        if (a.academicYear !== null) yearSet.add(a.academicYear);
+      });
+
+      // 關鍵排序：學年度由大到小排序 (最新排最前：115 -> 114 -> 113...)
+      const sortedYears = Array.from(yearSet).sort((a, b) => b - a);
 
       tabsContainer.innerHTML = "";
-      years.forEach(year => {
+
+      // 1. 全部年份按鈕
+      const allBtn = document.createElement("button");
+      allBtn.className = `year-tab ${currentYear === 'ALL' ? 'active' : ''}`;
+      allBtn.textContent = "全部年份";
+      allBtn.onclick = () => {
+        currentYear = "ALL";
+        renderYearTabs();
+        renderAlbums();
+      };
+      tabsContainer.appendChild(allBtn);
+
+      // 2. 依最新到最舊加入學年度按鈕
+      sortedYears.forEach(year => {
         const btn = document.createElement("button");
-        btn.className = `year-tab ${year === currentYear ? 'active' : ''}`;
-        btn.textContent = year === "ALL" ? "全部年份" : `${year} 學年度`;
+        btn.className = `year-tab ${currentYear === String(year) ? 'active' : ''}`;
+        btn.textContent = `${year} 學年度`;
         btn.onclick = () => {
-          currentYear = year;
+          currentYear = String(year);
           renderYearTabs();
           renderAlbums();
         };
@@ -379,7 +439,7 @@
 
       const filtered = currentYear === "ALL" 
         ? albumsData 
-        : albumsData.filter(a => a.year === currentYear);
+        : albumsData.filter(a => String(a.academicYear) === String(currentYear));
 
       if (filtered.length === 0) {
         grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 4rem; color: #94a3b8;">目前尚無相簿資料</div>`;
@@ -392,11 +452,12 @@
         card.onclick = () => openViewer(album);
 
         const cover = album.coverUrl || "https://images.unsplash.com/photo-1523580494863-6f3031224c94?w=600";
+        const yearTag = album.academicYear ? `${album.academicYear} 學年度` : "活動記錄";
 
         card.innerHTML = `
           <img src="${cover}" class="album-cover" alt="${album.albumName}" loading="lazy">
           <div class="album-info">
-            <div class="album-meta">📅 ${album.date || album.year + ' 學年度'} ｜ 共 ${album.photoUrls.length} 張相片</div>
+            <div class="album-meta">📅 ${album.date || yearTag} ｜ 共 ${album.photoUrls.length} 張相片</div>
             <h3 class="album-title">${album.albumName}</h3>
             <p class="album-desc">${album.description || '點擊瀏覽完整活動相簿。'}</p>
           </div>
