@@ -1002,3 +1002,63 @@ footer {
   font-size: 0.85rem;
   color: var(--text-secondary);
 }
+
+/* ===================================================
+   導覽列響應式防破版修復 (小螢幕與手機端)
+   =================================================== */
+
+/* 1. 確保所有導覽文字永不自動換行 */
+.site-title,
+.nav-links a,
+.pill-btn {
+  white-space: nowrap !important;
+}
+
+.site-logo {
+  flex-shrink: 0;
+}
+
+/* 2. 平板與手機版尺寸調整 (寬度小於 768px) */
+@media (max-width: 768px) {
+  .nav-wrap {
+    padding: 0 1rem !important;
+  }
+
+  /* Logo 標題微調縮小，防止佔用過多空間 */
+  .site-title {
+    font-size: 1.05rem !important;
+  }
+
+  .site-logo img {
+    width: 30px !important;
+    height: 30px !important;
+  }
+
+  .nav-right {
+    gap: 0.75rem !important;
+  }
+
+  /* 關鍵：小螢幕時隱藏桌面版純文字連結，由漢堡選單接手 */
+  .nav-links {
+    display: none !important;
+  }
+
+  /* 機械營膠囊按鈕縮小 padding 與字級，維持膠囊比例不折行 */
+  .pill-btn {
+    padding: 0.35rem 0.75rem !important;
+    font-size: 0.82rem !important;
+  }
+}
+
+/* 3. 超窄螢幕適應 (寬度小於 420px，如 iPhone SE) */
+@media (max-width: 420px) {
+  .site-title {
+    font-size: 0.95rem !important;
+  }
+
+  /* 若寬度極窄，只保留機械營圖示或稍微精簡 padding */
+  .pill-btn {
+    padding: 0.3rem 0.6rem !important;
+    font-size: 0.78rem !important;
+  }
+}
