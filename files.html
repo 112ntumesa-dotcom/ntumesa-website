@@ -476,39 +476,55 @@
     </div>
   </div>
 
-  <!-- ================= 使用說明彈出視窗 (Help Modal) ================= -->
+<!-- ================= 使用說明彈出視窗 (Help Modal) ================= -->
   <div id="help-modal-overlay" class="auth-overlay" style="display: none; z-index: 10000; background: rgba(15, 23, 42, 0.7);" onclick="handleHelpOverlayClick(event)">
-    <div class="auth-modal" style="max-width: 600px; text-align: left; position: relative; max-height: 85vh; overflow-y: auto; padding: 2.2rem;">
+    <div class="auth-modal" style="max-width: 620px; text-align: left; position: relative; max-height: 88vh; overflow-y: auto; padding: 2.2rem; border-radius: 20px;">
       <button onclick="closeHelpModal()" type="button" style="position: absolute; top: 1.2rem; right: 1.2rem; background: #f1f5f9; border: none; width: 34px; height: 34px; border-radius: 50%; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #64748b;">✕</button>
 
-      <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+      <!-- 標題 -->
+      <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 1rem;">
         <span style="font-size: 1.6rem;">📚</span>
-        <h2 style="margin: 0; font-size: 1.45rem; color: #0f172a;">NTUME 家產資料庫使用說明</h2>
+        <h2 style="margin: 0; font-size: 1.45rem; font-weight: 800; color: #0f172a;">NTUME 家產資料庫使用說明</h2>
       </div>
 
-      <p style="font-size: 0.93rem; color: #334155; line-height: 1.7; margin-bottom: 1.2rem;">
+      <!-- 介紹段落 -->
+      <p style="font-size: 0.93rem; color: #334155; line-height: 1.7; margin-bottom: 0.6rem;">
         NTUME 家產資料庫（Database）由台大機械系學會維護，整理歷屆課程筆記、作業與其他學習資源，讓系上累積的資料能持續保存與傳承。
       </p>
 
-      <div style="background: #f8fafc; border-radius: 12px; padding: 1.2rem; border: 1px solid #e2e8f0; margin-bottom: 1.2rem;">
-        <div style="font-weight: 700; color: #0f172a; margin-bottom: 0.4rem; font-size: 0.95rem;">🔑 登入方式有兩種：</div>
-        <ul style="margin: 0; padding-left: 1.25rem; font-size: 0.9rem; color: #475569; line-height: 1.6;">
+      <!-- 補回：網站連結 -->
+      <p style="font-size: 0.9rem; color: #64748b; margin-bottom: 1.2rem;">
+        🔗 <strong>網站連結：</strong><a href="https://ntumesa.com/files.html" style="color: var(--primary); text-decoration: underline;">https://ntumesa.com/files.html</a>
+      </p>
+
+      <!-- 核心權限與登入卡片 -->
+      <div style="background: #f8fafc; border-radius: 12px; padding: 1.25rem 1.4rem; border: 1px solid #e2e8f0; margin-bottom: 1.2rem;">
+        <div style="font-weight: 700; color: #0f172a; margin-bottom: 0.5rem; font-size: 0.95rem;">🔑 登入方式有兩種：</div>
+        <ul style="margin: 0 0 1.1rem 0; padding-left: 1.3rem; font-size: 0.9rem; color: #475569; line-height: 1.7;">
           <li>使用 <strong>@g.ntu.edu.tw</strong> 學生帳號快速授權登入</li>
           <li>輸入學號，透過台大 <strong>Webmail</strong> 收取驗證碼登入</li>
         </ul>
 
-        <div style="font-weight: 700; color: #0f172a; margin: 0.9rem 0 0.4rem 0; font-size: 0.95rem;">👥 目前使用權限開放給：</div>
-        <ol style="margin: 0; padding-left: 1.25rem; font-size: 0.9rem; color: #475569; line-height: 1.6;">
+        <div style="font-weight: 700; color: #0f172a; margin-bottom: 0.5rem; font-size: 0.95rem;">👥 目前使用權限開放給：</div>
+        <ol style="margin: 0 0 1rem 0; padding-left: 1.3rem; font-size: 0.9rem; color: #475569; line-height: 1.7;">
           <li>已繳交系學會費的同學</li>
           <li>系學會成員</li>
         </ol>
+
+        <!-- 乾淨無黑點的聯絡窗口 -->
+        <div style="border-top: 1px dashed #cbd5e1; padding-top: 0.75rem; font-size: 0.88rem; color: #475569; display: flex; align-items: center; gap: 0.4rem;">
+          <span>💬</span>
+          <span>如有疑問請聯絡<strong>系學會網管部長</strong>。</span>
+        </div>
       </div>
 
-      <div style="background: #fff1f2; border-left: 4px solid #f43f5e; padding: 0.8rem 1rem; border-radius: 6px; font-size: 0.86rem; color: #9f1239; margin-bottom: 1.2rem; line-height: 1.5;">
+      <!-- 紅色版權警告 -->
+      <div style="background: #fff1f2; border-left: 4px solid #f43f5e; padding: 0.85rem 1rem; border-radius: 8px; font-size: 0.86rem; color: #9f1239; margin-bottom: 1.2rem; line-height: 1.55;">
         ⚠️ 資料庫內容包含課堂筆記、作業、課程整理與其他修課資源，請勿任意公開散布、轉售或作商業用途。
       </div>
 
-      <p style="font-size: 0.9rem; color: #64748b; line-height: 1.6; margin: 0;">
+      <!-- 結語 -->
+      <p style="font-size: 0.88rem; color: #64748b; line-height: 1.65; margin: 0;">
         也請大家保留自己手邊有價值的課程資料。之後系學會將陸續徵集、收購優質資料，持續充實家產資料庫，讓每一屆留下的內容都能幫助下一屆。
       </p>
     </div>
